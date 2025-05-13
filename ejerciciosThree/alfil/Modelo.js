@@ -5,7 +5,7 @@ import * as CSG from '../libs/three-bvh-csg.js'
 import { Sacapuntas } from './sacapuntas.js'
 import { Lapiz } from './lapiz.js'
 
-class Modelo extends THREE.Object3D{
+class Alfil extends THREE.Object3D{
     constructor(){
         super()
 
@@ -163,4 +163,4 @@ class Modelo extends THREE.Object3D{
     update(){}
 }
 
-export { Modelo }
+export { Alfil }

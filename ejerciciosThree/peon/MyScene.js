@@ -4,7 +4,7 @@ import { TrackballControls } from '../libs/TrackballControls.js'
 
 // Clases de mi proyecto
 
-import { Modelo } from './Modelo.js'
+import { Peon } from './Modelo.js'
 
  
 /// La clase fachada del modelo
@@ -38,7 +38,7 @@ class MyScene extends THREE.Scene {
     this.axis = new THREE.AxesHelper (0.1);
     this.add (this.axis);
     
-    this.model = new Modelo();
+    this.model = new Peon();
     this.add (this.model);
   }
   

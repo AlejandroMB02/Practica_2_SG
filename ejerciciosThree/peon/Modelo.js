@@ -5,7 +5,7 @@ import * as CSG from '../libs/three-bvh-csg.js'
 import { Goma } from './goma.js'
 import { Lapiz } from './lapiz.js'
 
-class Modelo extends THREE.Object3D{
+class Peon extends THREE.Object3D{
     constructor(){
         super()
 
@@ -85,7 +85,7 @@ class Modelo extends THREE.Object3D{
 
         //Operaciones
         var evaluador = new CSG.Evaluator();
-        var ojo = evaluador.evaluate(ojo_izq_brush, ojo_der_brush, CSG.ADDITION);
+        
         var pies = evaluador.evaluate(pie_izq_brush, pie_der_brush, CSG.ADDITION);
         var zapatos = evaluador.evaluate(pies, suela_brush, CSG.SUBTRACTION);
         var piernas = evaluador.evaluate(pierna_izq_brush, pierna_der_brush, CSG.ADDITION);
@@ -93,6 +93,7 @@ class Modelo extends THREE.Object3D{
         var brazos = evaluador.evaluate(brazo_izq_brush, brazo_der_brush, CSG.ADDITION);
         var manos = evaluador.evaluate(mano_izq_brush, mano_der_brush, CSG.ADDITION);
         var brazos_final = evaluador.evaluate(brazos, manos, CSG.ADDITION);
+        var ojo = evaluador.evaluate(ojo_izq_brush, ojo_der_brush, CSG.ADDITION);
 
         this.add(lanza);
         this.add(cuerpo);
@@ -103,4 +104,4 @@ class Modelo extends THREE.Object3D{
     update(){}
 }
 
-export { Modelo }
+export { Peon }

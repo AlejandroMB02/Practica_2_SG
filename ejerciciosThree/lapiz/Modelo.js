@@ -1,7 +1,7 @@
 import * as THREE from '../libs/three.module.js'
 import * as CSG from '../libs/three-bvh-csg.js'
 
-class Modelo extends THREE.Object3D{
+class Lapiz extends THREE.Object3D{
     constructor(){
         super()
 
@@ -37,4 +37,4 @@ class Modelo extends THREE.Object3D{
     update(){}
 }
 
-export { Modelo }
+export { Lapiz }
