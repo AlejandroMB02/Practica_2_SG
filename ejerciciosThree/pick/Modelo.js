@@ -1,5 +1,7 @@
 import * as THREE from '../libs/three.module.js'
 import * as CSG from '../libs/three-bvh-csg.js'
+import { ChessPiece } from './ChessPiece.js';
+import { RookMovement, BishopMovement } from './MovementStrategies.js';
 
 class Tablero extends THREE.Object3D {
     constructor() {
@@ -30,15 +32,34 @@ class Tablero extends THREE.Object3D {
             }
         }
 
-        // Creación y posición de la pieza (torre)
-        this.pieza = new THREE.Mesh(
+        this.rook = new ChessPiece(
             new THREE.CylinderGeometry(0.04, 0.04, 0.08, 32),
-            new THREE.MeshStandardMaterial({ color: 0xff0000 })
+            new THREE.MeshStandardMaterial({ color: 0xff0000 }),
+            new RookMovement()
         );
-        // Posición relativa dentro de boardGroup para que coincida con (0,0)
-        this.pieza.position.set(0.0625, 0.04, 0.0625);
-        this.pieza.userData = { fila: 0, columna: 0 };
-        boardGroup.add(this.pieza);
+        this.rook.userData = { fila: 0, columna: 0 };
+        // posición = centro de casilla (0,0) + altura
+        this.rook.position.set(
+            0.0625 + 0 * 0.125,   // x = 0.0625 + columna*0.125
+            0.04,                  // y sobre el tablero
+            0.0625 + 0 * 0.125    // z = 0.0625 + fila*0.125
+        );
+        boardGroup.add(this.rook);
+
+        // Crear alfil modular:
+        this.bishop = new ChessPiece(
+            new THREE.ConeGeometry(0.04, 0.08, 32),
+            new THREE.MeshStandardMaterial({ color: 0x0000ff }),
+            new BishopMovement()
+        );
+        this.bishop.userData = { fila: 7, columna: 7 };
+        this.bishop.position.set(
+            0.0625 + 7 * 0.125,
+            0.04,
+            0.0625 + 7 * 0.125
+        ); boardGroup.add(this.bishop);
+        this.pieces = [this.rook, this.bishop];
+
 
         // Ajuste del tablero al sistema de coordenadas global
         marco.translate(0, -0.01, 0);
@@ -54,15 +75,21 @@ class Tablero extends THREE.Object3D {
         this.add(marco_final);
         this.add(boardGroup);
     }
-
-    resaltarCasillasLegales(fila, columna) {
+    getSquare(fila, columna) {
+        return this.squares[fila * 8 + columna];
+    }
+    resaltarCasillasLegales(pieza) {
         this.limpiarResaltado();
-        for (const sq of this.squares) {
-            if ((sq.userData.fila === fila || sq.userData.columna === columna) &&
-                !(sq.userData.fila === fila && sq.userData.columna === columna)) {
-                sq.material.emissive.setHex(0x00ff00);
-                sq.userData.resaltada = true;
-            }
+        // Obtenemos sólo los movimientos legales que NO tengan una pieza encima
+        const moves = pieza.getLegalMoves(this).filter(sq =>
+            !this.pieces.some(p =>
+                p.userData.fila === sq.userData.fila &&
+                p.userData.columna === sq.userData.columna
+            )
+        );
+        for (const sq of moves) {
+            sq.material.emissive.setHex(0x00ff00);
+            sq.userData.resaltada = true;
         }
     }
 
