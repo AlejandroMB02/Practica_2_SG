@@ -76,19 +76,33 @@ class Torre extends THREE.Object3D {
         this.add(apoyoFinal);
 
         //--------------------------------------------------------------------------------------------------
-        // 
+        // Boca
+        //--------------------------------------------------------------------------------------------------
+
+        var boca = this.createBoca();
+        boca.position.set(0, 0.013, -0.035);
+
+        //--------------------------------------------------------------------------------------------------
+        // Piernas
+        //--------------------------------------------------------------------------------------------------
+
+        var piernas = this.createPiernas();
+        this.updatePiernasRotation(0);
+
+        //--------------------------------------------------------------------------------------------------
         //--------------------------------------------------------------------------------------------------
 
         this.add(baseFija);
         this.add(this.cola); 
-
-        var boca = this.createBoca();
         this.add(boca);
+        this.add(piernas);
     }
 
     createGUI(gui, titleGui) {
         this.guiControls = {
-            rotacionCola: 0 // Valor inicial para el control GUI
+            rotacionCola: 0, // Valor inicial para el control GUI
+            aperturaBoca: 0,
+            movimientoPiernas: 0
         };
 
         // Se crea una sección para los controles
@@ -96,8 +110,82 @@ class Torre extends THREE.Object3D {
 
         // Corregido: El nombre de la propiedad en this.guiControls debe coincidir ('rotacionCola')
         folder.add(this.guiControls, 'rotacionCola', -Math.PI / 4, Math.PI / 4, 0.001) // Rango de rotación en radianes
-            .name('Oscilación Y : ') // Nombre que se muestra en la GUI
+            .name('Cola Y : ') // Nombre que se muestra en la GUI
             .onChange((value) => this.updateTailRotation(value)); // Llama a la función para actualizar la rotación
+
+        folder.add(this.guiControls, 'aperturaBoca', -Math.PI / 4, Math.PI / 50, 0.001) // Rango de rotación en radianes
+            .name('Boca X : ') // Nombre que se muestra en la GUI
+            .onChange((value) => this.updateBocaRotation(value));
+
+        folder.add(this.guiControls, 'movimientoPiernas', -Math.PI / 4, Math.PI / 4, 0.001) // Rango de rotación en radianes
+            .name('Piernas X : ') // Nombre que se muestra en la GUI
+            .onChange((value) => this.updatePiernasRotation(value));
+    }
+
+    createPiernas(){
+
+        var cadera_geom = new THREE.SphereGeometry(0.006);
+        var rodilla_geom = new THREE.SphereGeometry(0.006);
+        var muslo_geom = new THREE.CylinderGeometry(0.006, 0.006, 0.02);
+        var pie_geom = new THREE.BoxGeometry(0.012, 0.005, 0.02);
+
+        cadera_geom.translate(0, 0, 0);
+        rodilla_geom.translate(0, -0.02, 0);
+        rodilla_geom.rotateX(-Math.PI/10);
+        rodilla_geom.translate(0, 0, 0);
+        muslo_geom.translate(0, -0.01, 0);
+        muslo_geom.rotateX(-Math.PI/10);
+        muslo_geom.translate(0, 0, 0);
+        pie_geom.translate(0, -0.023, 0.01);
+        //desp X = 0.022
+
+        var pierna1 = new THREE.Object3D();
+        var pierna2 = new THREE.Object3D();
+        var pierna3 = new THREE.Object3D();
+        var pierna4 = new THREE.Object3D();
+        for (let i = 0; i < 4; i++) {
+            var cadera = new THREE.Mesh(cadera_geom, this.material);
+            var rodilla = new THREE.Mesh(rodilla_geom, this.material);
+            var muslo = new THREE.Mesh(muslo_geom, this.material);
+            var pie = new THREE.Mesh(pie_geom, this.material);
+            if(i == 0){
+                pierna1.add(cadera);
+                pierna1.add(rodilla);
+                pierna1.add(muslo);
+                pierna1.add(pie);
+            }
+            if(i == 1){
+                pierna2.add(cadera);
+                pierna2.add(rodilla);
+                pierna2.add(muslo);
+                pierna2.add(pie);
+            }
+            if(i == 2){
+                pierna3.add(cadera);
+                pierna3.add(rodilla);
+                pierna3.add(muslo);
+                pierna3.add(pie);
+            }
+            if(i == 3){
+                pierna4.add(cadera);
+                pierna4.add(rodilla);
+                pierna4.add(muslo);
+                pierna4.add(pie);
+            }
+        }
+
+        this.pierna1 = pierna1;
+        this.pierna2 = pierna2;
+        this.pierna3 = pierna3;
+        this.pierna4 = pierna4;
+        
+        var piernas = new THREE.Object3D();
+        piernas.add(pierna1);
+        piernas.add(pierna2);
+        piernas.add(pierna3);
+        piernas.add(pierna4);
+
+        return piernas;
     }
 
     createBoca(){
@@ -117,7 +205,7 @@ class Torre extends THREE.Object3D {
         var geom_apoyo_2 = new THREE.BoxGeometry(0.003, 0.012, 0.01);
         var geom_cil_1 = new THREE.CylinderGeometry(0.005, 0.005, 0.003);
         var geom_cil_2 = new THREE.CylinderGeometry(0.005, 0.005, 0.003);
-        var geom_eje = new THREE.CylinderGeometry(0.003, 0.003, 0.04)
+        var geom_eje = new THREE.CylinderGeometry(0.003, 0.003, 0.04);
 
         //Transformaciones
         geom_apoyo_1.translate(0.015, -0.019, 0);
@@ -181,14 +269,65 @@ class Torre extends THREE.Object3D {
             grupoDientes3.add(diente);
         }
 
+        var geom_eje_final = new THREE.CylinderGeometry(0.003, 0.003, 0.03);
+        geom_eje_final.rotateZ(Math.PI/2);
+        geom_eje_final.translate(0, 0.013, 0);
+        geom_eje_final.translate(0, 0, -0.035);
+        var eje_final = new THREE.Mesh(geom_eje_final, this.material);
+
+        const grupoEscamas = new THREE.Group();
+        for (let j = 0; j < 15; j++) {
+            const geometry = new THREE.CylinderGeometry(0, 0.004, 0.008, 4);
+            const escama = new THREE.Mesh(geometry, this.material);
+            escama.scale.set(0.5, 1, 1);
+            escama.position.y = 0.053;
+            escama.position.z = 0.035 - (j*0.005);
+            grupoEscamas.add(escama);
+        }
+        grupoEscamas.rotateX(-Math.PI/60);
+
+        const grupoOjos = new THREE.Group();
+        var ojo_der = new THREE.SphereGeometry(0.003);
+        var ojo_izq = new THREE.SphereGeometry(0.003);
+        var cuenca_der = new THREE.CylinderGeometry(0, 0.0032, 0.01);
+        var cuenca_izq = new THREE.CylinderGeometry(0, 0.0032, 0.01);
+
+        ojo_der.translate(0.015, 0.052, 0.035);
+        ojo_izq.translate(-0.015, 0.052, 0.035);
+
+        cuenca_der.translate(0, 0.005, 0);
+        cuenca_der.rotateX(-Math.PI/1.9);
+        cuenca_der.translate(0.015, 0.052, 0.035);
+        cuenca_izq.translate(0, 0.005, 0);
+        cuenca_izq.rotateX(-Math.PI/1.9);
+        cuenca_izq.translate(-0.015, 0.052, 0.035);
+
+        var ojo_der_mesh = new THREE.Mesh(ojo_der, this.material);
+        var ojo_izq_mesh = new THREE.Mesh(ojo_izq, this.material);
+        var cuenca_der_mesh = new THREE.Mesh(cuenca_der, this.material);
+        var cuenca_izq_mesh = new THREE.Mesh(cuenca_izq, this.material);
+
+        grupoOjos.add(ojo_der_mesh);
+        grupoOjos.add(ojo_izq_mesh);
+        grupoOjos.add(cuenca_der_mesh);
+        grupoOjos.add(cuenca_izq_mesh);
+
         const grupoBoca = new THREE.Group();
         grupoBoca.add(bocaMesh);
         grupoBoca.add(grupoDientes1);
         grupoBoca.add(grupoDientes2);
         grupoBoca.add(grupoDientes3);
         grupoBoca.add(apoyoFinal);
+        grupoBoca.add(eje_final);
+        grupoBoca.add(grupoEscamas);
+        grupoBoca.add(grupoOjos);
+        grupoBoca.position.set(0, -0.013, 0.035);
 
-        return grupoBoca;
+        var grupoReturn = new THREE.Group();
+        grupoReturn.add(grupoBoca);
+        this.boca = grupoReturn;
+
+        return this.boca;
     }
 
     createPuntaCola() {
@@ -306,6 +445,30 @@ class Torre extends THREE.Object3D {
         }
          if (this.segmentoPunta) {
              this.segmentoPunta.rotation.y = valor;
+        }
+    }
+
+    updateBocaRotation(valor) {
+        this.boca.rotation.x = valor;
+        this.boca.position.set(0, 0.013, -0.035);
+    }
+
+    updatePiernasRotation(valor) {
+        if (this.pierna1) {
+             this.pierna1.rotation.x = valor;
+             this.pierna1.position.set(0.022, 0, 0.04);
+        }
+        if (this.pierna2) {
+             this.pierna2.rotation.x = valor;
+             this.pierna2.position.set(0.022, 0, -0.04);
+        }
+        if (this.pierna3) {
+             this.pierna3.rotation.x = -valor;
+             this.pierna3.position.set(-0.022, 0, -0.04);
+        }
+        if (this.pierna4) {
+             this.pierna4.rotation.x = -valor;
+             this.pierna4.position.set(-0.022, 0, 0.04);
         }
     }
 
