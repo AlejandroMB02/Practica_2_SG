@@ -1,106 +1,184 @@
 import * as THREE from '../libs/three.module.js'
-import * as CSG from '../libs/three-bvh-csg.js'
-import { ChessPiece } from './ChessPiece.js';
-import { RookMovement, BishopMovement } from './MovementStrategies.js';
+import * as CSG   from '../libs/three-bvh-csg.js'
+import { ChessPiece }                               from './ChessPiece.js'
+import {
+  RookMovement, BishopMovement, KnightMovement,
+  QueenMovement, KingMovement, PawnMovement
+} from './MovementStrategies.js'
 
 class Tablero extends THREE.Object3D {
-    constructor() {
-        super()
-        this.squares = [];
-        const material_blanco = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
-        const material_negro = new THREE.MeshStandardMaterial({ color: 0x000000 });
+  constructor() {
+    super()
+    // Arrays de casillas y piezas
+    this.squares = []
+    this.pieces  = []
 
-        // Grupo que contiene las casillas y la pieza
-        const boardGroup = new THREE.Group();
+    const material_blanco = new THREE.MeshStandardMaterial({ color: 0xFFFFFF })
+    const material_negro  = new THREE.MeshStandardMaterial({ color: 0x000000 })
 
-        // Geometrías para el marco
-        const marco = new THREE.BoxGeometry(1.1, 0.02, 1.1);
-        const marco_interior = new THREE.BoxGeometry(1.0, 0.02, 1.0);
+    // Grupo para casillas y piezas
+    const boardGroup = new THREE.Group()
 
-        // Construcción de la cuadrícula
-        for (let i = 0; i < 8; i++) {
-            for (let j = 0; j < 8; j++) {
-                const geom = new THREE.BoxGeometry(0.125, 0.02, 0.125);
-                const baseMat = ((i + j) % 2 === 0) ? material_blanco : material_negro;
-                const mat = baseMat.clone();
-                const square = new THREE.Mesh(geom, mat);
-                square.position.x = 0.0625 + j * 0.125;
-                square.position.z = 0.0625 + i * 0.125;
-                square.userData = { fila: i, columna: j, resaltada: false };
-                boardGroup.add(square);
-                this.squares.push(square);
-            }
-        }
+    // Geometrías para marco
+    const marco          = new THREE.BoxGeometry(1.1,  0.02, 1.1)
+    const marco_interior = new THREE.BoxGeometry(1.0,  0.02, 1.0)
 
-        this.rook = new ChessPiece(
-            new THREE.CylinderGeometry(0.04, 0.04, 0.08, 32),
-            new THREE.MeshStandardMaterial({ color: 0xff0000 }),
-            new RookMovement()
-        );
-        this.rook.userData = { fila: 0, columna: 0 };
-        // posición = centro de casilla (0,0) + altura
-        this.rook.position.set(
-            0.0625 + 0 * 0.125,   // x = 0.0625 + columna*0.125
-            0.04,                  // y sobre el tablero
-            0.0625 + 0 * 0.125    // z = 0.0625 + fila*0.125
-        );
-        boardGroup.add(this.rook);
+    // Construcción de la cuadrícula 8x8
+    for (let fila = 0; fila < 8; fila++) {
+      for (let col = 0; col < 8; col++) {
+        const geom   = new THREE.BoxGeometry(0.125, 0.02, 0.125)
+        const baseMat= ((fila + col) % 2 === 0)
+          ? material_blanco
+          : material_negro
+        const mat    = baseMat.clone()  // instancia única
+        const square = new THREE.Mesh(geom, mat)
 
-        // Crear alfil modular:
-        this.bishop = new ChessPiece(
-            new THREE.ConeGeometry(0.04, 0.08, 32),
-            new THREE.MeshStandardMaterial({ color: 0x0000ff }),
-            new BishopMovement()
-        );
-        this.bishop.userData = { fila: 7, columna: 7 };
-        this.bishop.position.set(
-            0.0625 + 7 * 0.125,
-            0.04,
-            0.0625 + 7 * 0.125
-        ); boardGroup.add(this.bishop);
-        this.pieces = [this.rook, this.bishop];
+        square.position.set(
+          0.0625 + col * 0.125,
+          0,
+          0.0625 + fila * 0.125
+        )
+        square.userData = { fila, columna: col, resaltada: false }
 
-
-        // Ajuste del tablero al sistema de coordenadas global
-        marco.translate(0, -0.01, 0);
-        marco_interior.translate(0, -0.01, 0);
-        boardGroup.position.set(-0.5, -0.01, -0.5);
-
-        // Operación CSG para el marco
-        const brush1 = new CSG.Brush(marco, material_negro);
-        const brush2 = new CSG.Brush(marco_interior, material_negro);
-        const evalr = new CSG.Evaluator();
-        const marco_final = evalr.evaluate(brush1, brush2, CSG.SUBTRACTION);
-
-        this.add(marco_final);
-        this.add(boardGroup);
-    }
-    getSquare(fila, columna) {
-        return this.squares[fila * 8 + columna];
-    }
-    resaltarCasillasLegales(pieza) {
-        this.limpiarResaltado();
-        // Obtenemos sólo los movimientos legales que NO tengan una pieza encima
-        const moves = pieza.getLegalMoves(this).filter(sq =>
-            !this.pieces.some(p =>
-                p.userData.fila === sq.userData.fila &&
-                p.userData.columna === sq.userData.columna
-            )
-        );
-        for (const sq of moves) {
-            sq.material.emissive.setHex(0x00ff00);
-            sq.userData.resaltada = true;
-        }
+        boardGroup.add(square)
+        this.squares.push(square)
+      }
     }
 
-    limpiarResaltado() {
-        for (const sq of this.squares) {
-            sq.material.emissive.setHex(0x000000);
-            sq.userData.resaltada = false;
-        }
+    // Función auxiliar: centra cada casilla y pieza
+    const cellCenterX = i => 0.0625 + i * 0.125
+
+    // === Creación de piezas modulares ===
+    const addPiece = (piece, fila, col, team) => {
+      piece.userData = { fila, columna: col }
+      piece.team     = team
+      piece.position.set(
+        cellCenterX(col),
+        0.04,
+        cellCenterX(fila)
+      )
+      boardGroup.add(piece)
+      this.pieces.push(piece)
     }
 
-    update() { }
+    // Torre blanca en a1
+    addPiece(
+      new ChessPiece(
+        new THREE.CylinderGeometry(0.04, 0.04, 0.08, 32),
+        new THREE.MeshStandardMaterial({ color: 0xff0000 }),
+        new RookMovement()
+      ),
+      0, 0, 'white'
+    )
+
+    // Alfil negro en h8
+    addPiece(
+      new ChessPiece(
+        new THREE.ConeGeometry(0.04, 0.08, 32),
+        new THREE.MeshStandardMaterial({ color: 0x0000ff }),
+        new BishopMovement()
+      ),
+      7, 7, 'black'
+    )
+
+    // Caballo blanco en b1
+    addPiece(
+      new ChessPiece(
+        new THREE.BoxGeometry(0.06, 0.08, 0.06),
+        new THREE.MeshStandardMaterial({ color: 0x00ff00 }),
+        new KnightMovement()
+      ),
+      0, 1, 'white'
+    )
+
+    // Reina blanca en d1
+    addPiece(
+      new ChessPiece(
+        new THREE.CylinderGeometry(0.04, 0.04, 0.08, 32),
+        new THREE.MeshStandardMaterial({ color: 0xffff00 }),
+        new QueenMovement()
+      ),
+      0, 3, 'white'
+    )
+
+    // Rey blanco en e1
+    addPiece(
+      new ChessPiece(
+        new THREE.BoxGeometry(0.08, 0.08, 0.08),
+        new THREE.MeshStandardMaterial({ color: 0xffffff }),
+        new KingMovement()
+      ),
+      0, 4, 'white'
+    )
+
+    // Peones
+    for (let col = 0; col < 8; col++) {
+      addPiece(
+        new ChessPiece(
+          new THREE.CylinderGeometry(0.035, 0.035, 0.07, 16),
+          new THREE.MeshStandardMaterial({ color: 0xffffff }),
+          new PawnMovement(+1)
+        ),
+        1, col, 'white'
+      )
+      addPiece(
+        new ChessPiece(
+          new THREE.CylinderGeometry(0.035, 0.035, 0.07, 16),
+          new THREE.MeshStandardMaterial({ color: 0x000000 }),
+          new PawnMovement(-1)
+        ),
+        6, col, 'black'
+      )
+    }
+
+    // Ajuste del grupo en coordenadas globales
+    boardGroup.position.set(-0.5, -0.01, -0.5)
+
+    // CSG para marco
+    marco.translate(0, -0.01, 0)
+    marco_interior.translate(0, -0.01, 0)
+    const evalr      = new CSG.Evaluator()
+    const marco_final= evalr.evaluate(
+      new CSG.Brush(marco, material_negro),
+      new CSG.Brush(marco_interior, material_negro),
+      CSG.SUBTRACTION
+    )
+
+    this.add(marco_final)
+    this.add(boardGroup)
+  }
+
+  // Retorna casilla en coordenadas (fila, columna)
+  getSquare(fila, columna) {
+    return this.squares[fila * 8 + columna]
+  }
+
+  // Resalta según movimientos legales de la pieza
+  resaltarCasillasLegales(pieza) {
+    this.limpiarResaltado()
+    for (const sq of pieza.getLegalMoves(this)) {
+      sq.material.emissive.setHex(0x00ff00)
+      sq.userData.resaltada = true
+    }
+  }
+
+  // Limpia resaltado en todas las casillas
+  limpiarResaltado() {
+    for (const sq of this.squares) {
+      sq.material.emissive.setHex(0x000000)
+      sq.userData.resaltada = false
+    }
+  }
+
+  // Devuelve la pieza en (fila, columna) o null
+  getPiece(fila, columna) {
+    return this.pieces.find(p =>
+      p.userData.fila    === fila &&
+      p.userData.columna === columna
+    ) || null
+  }
+
+  update() {}
 }
 
-export { Tablero };
+export { Tablero }

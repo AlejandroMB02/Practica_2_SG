@@ -14,10 +14,11 @@ class ChessPiece extends THREE.Mesh {
     }
     this.movementStrategy = movementStrategy;
     this.userData = { fila: 0, columna: 0 };
+    this.team = null; // equipo de la pieza
   }
   getLegalMoves(board) {
     const { fila, columna } = this.userData;
-    return this.movementStrategy.getLegalMoves(fila, columna, board);
+    return this.movementStrategy.getLegalMoves(fila, columna, board, this);
   }
 }
 
