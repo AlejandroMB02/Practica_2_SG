@@ -107,21 +107,23 @@ class MyScene extends THREE.Scene {
           const idx = arr.length - 1;
           const perRow = 4;
           const spacing = 0.15;
-
           // calcula fila y columna dentro de la zona de captura
           const row = Math.floor(idx / perRow);
           const col = idx % perRow;
 
-          // define offsets X según equipo
+          // define offsets base según equipo
           const xBase = target.team === 'white' ? -0.15 : 1.25;
 
-          // Z avanza por columnas, Y por filas
-          const xPos = xBase;
+          // cuánto se aleja cada fila de 4 piezas
+          const rowSpacing = 0.15;
+
+          // Z avanza por columnas, X por “filas”
+          const xPos = xBase + row * rowSpacing;
           const zPos = -0.3 + spacing / 2 + col * spacing;
-          const yPos = 0.02 + row * (spacing + 0.02);
+          // misma altura para todas
+          const yPos = 0.02;
 
           target.position.set(xPos, yPos, zPos);
-
           target.userData.captured = true
           // quitar de juego
           this.model.pieces = this.model.pieces.filter(p => p !== target)
