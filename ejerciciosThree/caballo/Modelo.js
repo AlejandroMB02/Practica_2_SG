@@ -7,9 +7,6 @@ class Caballo extends THREE.Object3D {
     constructor() {
         super();
 
-        var lanza = new Lapiz();
-        lanza.rotateX(Math.PI/2);
-        lanza.position.set(0, -0.01, 0);
         const loader = new THREE.TextureLoader();
                 const texturaMadera = loader.load('./Texturas/madera.jpeg');
         
@@ -25,10 +22,10 @@ class Caballo extends THREE.Object3D {
         pierna1.rotateZ(Math.PI / 2);
         pierna2.rotateZ(Math.PI / 2);
         pierna3.rotateZ(Math.PI / 2);
-        pierna.translate(-0.04, -0.005, 0.04);
-        pierna1.translate(-0.04, 0.005, -0.04);
-        pierna2.translate(-0.04, -0.005, -0.04);
-        pierna3.translate(-0.04, 0.005, 0.04);
+        pierna.translate(-0.04+0.09, -0.005, 0.04);
+        pierna1.translate(-0.04+0.09, 0.005, -0.04);
+        pierna2.translate(-0.04+0.09, -0.005, -0.04);
+        pierna3.translate(-0.04+0.09, 0.005, 0.04);
 
         var pierna1_brush = new CSG.Brush(pierna, materialMadera);
         var pierna2_brush = new CSG.Brush(pierna1, materialMadera); 
@@ -45,7 +42,7 @@ class Caballo extends THREE.Object3D {
             specular: 0xffffff, // Color del reflejo especular
             shininess: 100,    // Nivel de brillo (0 a 100)
             flatShading: false
-});
+        });
 
 //Geometrias
 var ojo_izq = new THREE.SphereGeometry(0.005, 50, 50);
@@ -54,8 +51,8 @@ var ojo_der = new THREE.SphereGeometry(0.005, 50, 50);
 //Transformaciones
 ojo_izq.scale(1,1.5,1);
 ojo_der.scale(1,1.5,1);
-ojo_izq.translate(-0.006, 0.045, 0.06);
-ojo_der.translate(0.006, 0.045, 0.06);
+ojo_izq.translate(-0.006, 0.045+0.09, 0.06);
+ojo_der.translate(0.006, 0.045+0.09, 0.06);
 ojo_der.rotateZ(-Math.PI/2);
 ojo_izq.rotateZ(-Math.PI/2);
 //Brush
@@ -63,20 +60,20 @@ var ojo_izq_brush = new CSG.Brush(ojo_izq, material_negro_brillante);
 var ojo_der_brush = new CSG.Brush(ojo_der, material_negro_brillante);
         // Crear y añadir la regla debajo del círculo de lápices
         const regla = new Regla();
+        regla.position.set(0.09, 0, 0);
         
         this.rotateZ(Math.PI / 2); // Rotar la regla para que esté en la posición correcta
         const regla2 = new Regla();
         
+        regla2.scale.set(1, 0.99, 1);
         regla2.rotateY(Math.PI / 3);
-        regla2.translateX(-0.03);
-        regla2.translateZ(0.05);
+        regla2.translateX(0.03);
+        regla2.translateZ(0.05+0.07);
         this.add(regla);
-        this.add(regla2);
+        this.add(regla2); 
         this.add(pierna3fig);
         var ojo = evaluador.evaluate(ojo_izq_brush, ojo_der_brush, CSG.ADDITION);
         this.add(ojo);
-
-        this.add(lanza);
     }
 
     update() {}

@@ -27,7 +27,9 @@ class Peon extends THREE.Object3D{
         var lanza = new Lapiz();
 
         lanza.scale.set(0.75,0.75,0.75);
-        lanza.position.set(0.045, 0.02, 0);
+        lanza.position.set(0.045, 0.02+0.07, 0);
+
+        cuerpo.position.set(0, 0.07, 0);
         //***************************************
 
         //Geometrias
@@ -48,25 +50,25 @@ class Peon extends THREE.Object3D{
         //Transformaciones
         ojo_izq.scale(1,1.5,1);
         ojo_der.scale(1,1.5,1);
-        ojo_izq.translate(-0.01, 0.025, 0.016);
-        ojo_der.translate(0.01, 0.025, 0.016);
+        ojo_izq.translate(-0.01, 0.025+0.07, 0.016);
+        ojo_der.translate(0.01, 0.025+0.07, 0.016);
 
-        pie_izq.translate(-0.012, -0.07, 0);
-        pie_der.translate(0.012, -0.07, 0);
-        suela.translate(0, -0.12, 0);
-        pierna_izq.translate(-0.012,-0.055,0);
-        pierna_der.translate(0.012,-0.055,0);
+        pie_izq.translate(-0.012, -0.07+0.07, 0);
+        pie_der.translate(0.012, -0.07+0.07, 0);
+        suela.translate(0, -0.12+0.07, 0);
+        pierna_izq.translate(-0.012,-0.055+0.07,0);
+        pierna_der.translate(0.012,-0.055+0.07,0);
 
         brazo_der.rotateZ(Math.PI/2);
-        brazo_der.translate(0.03, 0, 0);
+        brazo_der.translate(0.03, 0+0.07, 0);
         brazo_izq.rotateZ(-Math.PI/4);
-        brazo_izq.translate(-0.03, 0, 0);
+        brazo_izq.translate(-0.03, 0+0.07, 0);
         mano_der.translate(0, -0.0075, 0);
         mano_der.rotateZ(Math.PI/2);
-        mano_der.translate(0.03, 0, 0);
+        mano_der.translate(0.03, 0+0.07, 0);
         mano_izq.translate(0, -0.0075, 0);
         mano_izq.rotateZ(-Math.PI/4);
-        mano_izq.translate(-0.03, 0, 0);
+        mano_izq.translate(-0.03, 0+0.07, 0);
 
         //Brush
         var ojo_izq_brush = new CSG.Brush(ojo_izq, material_negro_brillante);

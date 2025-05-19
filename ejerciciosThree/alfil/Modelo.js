@@ -36,7 +36,8 @@ class Alfil extends THREE.Object3D{
         var cuerpo = new Lapiz();
         var casco = new Sacapuntas();
 
-        casco.position.set(0.0008, 0.107, 0.01);
+        casco.position.set(0.0008, 0.107+0.12, 0.01);
+        cuerpo.position.set(0, 0.12, 0);
         //***************************************
 
         //Geometrias
@@ -59,15 +60,15 @@ class Alfil extends THREE.Object3D{
         var end_tor_hor = new THREE.BoxGeometry(0.0029, 0.0004, 0.0022);
 
         //Transformaciones
-        pie_izq.translate(-0.012, -0.12, 0);
-        pie_der.translate(0.012, -0.12, 0);
-        suela.translate(0, -0.17, 0);
+        pie_izq.translate(-0.012, -0.12+0.12, 0);
+        pie_der.translate(0.012, -0.12+0.12, 0);
+        suela.translate(0, -0.17+0.12, 0);
         pierna_izq.translate(0,-0.0075,0);
         pierna_der.translate(0,-0.0075,0);
         pierna_izq.rotateZ(-Math.PI/8);
         pierna_der.rotateZ(Math.PI/8);
-        pierna_izq.translate(-0.004,-0.098,0);
-        pierna_der.translate(0.004,-0.098,0);
+        pierna_izq.translate(-0.004,-0.098+0.12,0);
+        pierna_der.translate(0.004,-0.098+0.12,0);
 
         brazo_der.rotateZ(Math.PI/2);
         brazo_der.translate(0.013, 0, 0);
@@ -90,6 +91,10 @@ class Alfil extends THREE.Object3D{
         brazo_der.rotateY(-Math.PI/4);
         mano_der.rotateY(-Math.PI/4);
 
+        brazo_der.translate(0, 0.12,0);
+        brazo_izq.translate(0, 0.12, 0);
+        mano_der.translate(0, 0.12, 0);
+        mano_izq.translate(0, 0.12, 0);
         ////////////////////////
         cuchilla.translate(-0.003, 0.085, 0.0017);
 
@@ -103,17 +108,17 @@ class Alfil extends THREE.Object3D{
         end_tor_hor.translate(0, 0.085, 0.0028);
 
         lanza.rotateZ(-Math.PI/6);
-        lanza.translate(0, 0.004, 0.015);
+        lanza.translate(0, 0.004+0.12, 0.015);
         cuchilla.rotateZ(-Math.PI/6);
-        cuchilla.translate(0, 0.004, 0.015);
+        cuchilla.translate(0, 0.004+0.12, 0.015);
         cuerpo_tornillo.rotateZ(-Math.PI/6);
-        cuerpo_tornillo.translate(0, 0.004, 0.015);
+        cuerpo_tornillo.translate(0, 0.004+0.12, 0.015);
         end_tor_ver.rotateZ(-Math.PI/6);
-        end_tor_ver.translate(0, 0.004, 0.015);
+        end_tor_ver.translate(0, 0.004+0.12, 0.015);
         end_tor_hor.rotateZ(-Math.PI/6);
-        end_tor_hor.translate(0, 0.004, 0.015);
+        end_tor_hor.translate(0, 0.004+0.12, 0.015);
         filo.rotateZ(-Math.PI/6);
-        filo.translate(0, 0.004, 0.015);
+        filo.translate(0, 0.004+0.12, 0.015);
         
 
         //Brush

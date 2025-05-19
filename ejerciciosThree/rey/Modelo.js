@@ -37,28 +37,29 @@ class Rey extends THREE.Object3D{
         var corona = new Corona();
 
         //Transformaciones
-        corona.position.set(0, 0.085, 0);
+        corona.position.set(0, 0.085+0.065, 0);
+        cuerpo.position.set(0, 0.065, 0);
 
         ojo_izq.scale(1,1.5,1);
         ojo_der.scale(1,1.5,1);
-        ojo_izq.translate(-0.01, 0.025, 0.016);
-        ojo_der.translate(0.01, 0.025, 0.016);
+        ojo_izq.translate(-0.01, 0.025+0.065, 0.016);
+        ojo_der.translate(0.01, 0.025+0.065, 0.016);
 
-        base_bigote_izq.translate(-0.0026, 0.013, 0.019);
-        base_bigote_der.translate(0.0026, 0.013, 0.019);
+        base_bigote_izq.translate(-0.0026, 0.013+0.065, 0.019);
+        base_bigote_der.translate(0.0026, 0.013+0.065, 0.019);
         cuerpo_bigote_izq.translate(0, 0.005, 0);
         cuerpo_bigote_der.translate(0, 0.005, 0);
         cuerpo_bigote_izq.rotateZ(Math.PI/3);
         cuerpo_bigote_der.rotateZ(-Math.PI/3);
-        cuerpo_bigote_izq.translate(-0.0026, 0.013, 0.019);
-        cuerpo_bigote_der.translate(0.0026, 0.013, 0.019);
+        cuerpo_bigote_izq.translate(-0.0026, 0.013+0.065, 0.019);
+        cuerpo_bigote_der.translate(0.0026, 0.013+0.065, 0.019);
 
         uni_izq.translate(0, 0.005, 0);
         uni_der.translate(0, 0.005, 0);
         uni_izq.rotateZ(Math.PI/3);
         uni_der.rotateZ(-Math.PI/3);
-        uni_izq.translate(-0.0026, 0.013, 0.019);
-        uni_der.translate(0.0026, 0.013, 0.019);
+        uni_izq.translate(-0.0026, 0.013+0.065, 0.019);
+        uni_der.translate(0.0026, 0.013+0.065, 0.019);
 
         //Brush
         var ojo_izq_brush = new CSG.Brush(ojo_izq, material_negro_brillante);
