@@ -38,7 +38,7 @@ class MyScene extends THREE.Scene {
     this.axis = new THREE.AxesHelper (0.1);
     this.add (this.axis);
     
-    this.model = new Torre(this.gui, "Controles de la Colas");
+    this.model = new Torre(this.gui, "Controles Torre");
     this.add (this.model);
   }
   
