@@ -42,9 +42,6 @@ class Torre extends THREE.Object3D {
         // COLA
         //--------------------------------------------------------------------------------------------------
 
-        // Material común para todas las partes
-        this.material = new THREE.MeshStandardMaterial({ color: 0x888888 });
-
         // Propiedades para almacenar las referencias a los segmentos para poder rotarlos dinámicamente
         this.segmentoPunta = null;
         this.segmentoMitad = null;
@@ -68,7 +65,7 @@ class Torre extends THREE.Object3D {
         var baseFijaGeom = new THREE.ExtrudeGeometry ( shape , options );
         baseFijaGeom.rotateX(Math.PI/2);
 
-        var baseFija = new THREE.Mesh(baseFijaGeom, this.material);
+        var baseFija = new THREE.Mesh(baseFijaGeom, this.metalMaterial);
 
         var geom_apoyo_1 = new THREE.BoxGeometry(0.003, 0.012, 0.01);
         var geom_apoyo_2 = new THREE.BoxGeometry(0.003, 0.012, 0.01);
@@ -272,11 +269,11 @@ class Torre extends THREE.Object3D {
         geom_cil_2.translate(0.003, 0, -0.035);
         geom_eje.translate(0, 0, -0.035);
 
-        var apoyo1_brush = new CSG.Brush(geom_apoyo_1, this.material);
-        var apoyo2_brush = new CSG.Brush(geom_apoyo_2, this.material);
-        var cil1_brush = new CSG.Brush(geom_cil_1, this.material);
-        var cil2_brush = new CSG.Brush(geom_cil_2, this.material);
-        var eje_brush = new CSG.Brush(geom_eje, this.material);
+        var apoyo1_brush = new CSG.Brush(geom_apoyo_1, this.metalMaterial);
+        var apoyo2_brush = new CSG.Brush(geom_apoyo_2, this.metalMaterial);
+        var cil1_brush = new CSG.Brush(geom_cil_1, this.metalMaterial);
+        var cil2_brush = new CSG.Brush(geom_cil_2, this.metalMaterial);
+        var eje_brush = new CSG.Brush(geom_eje, this.metalMaterial);
 
         //Operaciones
         var evaluador = new CSG.Evaluator();
@@ -320,12 +317,12 @@ class Torre extends THREE.Object3D {
         geom_eje_final.rotateZ(Math.PI/2);
         geom_eje_final.translate(0, 0.013, 0);
         geom_eje_final.translate(0, 0, -0.035);
-        var eje_final = new THREE.Mesh(geom_eje_final, this.material);
+        var eje_final = new THREE.Mesh(geom_eje_final, this.metalMaterial);
 
         const grupoEscamas = new THREE.Group();
         for (let j = 0; j < 15; j++) {
             const geometry = new THREE.CylinderGeometry(0, 0.004, 0.008, 4);
-            const escama = new THREE.Mesh(geometry, this.material);
+            const escama = new THREE.Mesh(geometry, this.metalMaterial);
             escama.scale.set(0.5, 1, 1);
             escama.position.y = 0.053;
             escama.position.z = 0.035 - (j*0.005);

@@ -41,6 +41,11 @@ class MyScene extends THREE.Scene {
     
     this.model = new Torre();
     this.add (this.model);
+
+    // Animation variables for walking
+    this.walkAnimationTime = 0;
+    this.walkSpeed = 0.1; // Adjust this value to control walking speed
+    this.walkAmplitude = Math.PI/2; // Adjust this value to control leg swing
   }
   
   createCamera () {
@@ -176,22 +181,25 @@ class MyScene extends THREE.Scene {
   }
 
   update () {
-    // Le decimos al renderizador "visualiza la escena que te indico usando la cámara que te estoy pasando"
     this.renderer.render (this, this.getCamera());
-
-    // Se actualiza la posición de la cámara según su controlador
     this.cameraControl.update();
-    
-    // Se actualiza el resto del modelo
+
+    // Update walk animation time
+    this.walkAnimationTime += this.walkSpeed;
+
+    // Calculate the value for leg rotation using a sine wave
+    // This will create a smooth back-and-forth motion
+    const piernasRotationValue = Math.sin(this.walkAnimationTime) * this.walkAmplitude;
+
+    // Apply the rotation to the model's legs
+    this.model.updatePiernasRotation(piernasRotationValue);
+
+    // Update the rest of the model (including TWEEN animations for tail and mouth)
     this.model.update();
-    
-    // Este método debe ser llamado cada vez que queramos visualizar la escena de nuevo.
-    // Literalmente le decimos al navegador: "La próxima vez que haya que refrescar la pantalla, llama al método que te indico".
-    // Si no existiera esta línea,  update()  se ejecutaría solo la primera vez.
+
     requestAnimationFrame(() => this.update())
   }
 }
-
 
 /// La función   main
 $(function () {
