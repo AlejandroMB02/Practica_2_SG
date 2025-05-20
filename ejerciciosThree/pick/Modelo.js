@@ -10,6 +10,7 @@ import { Peon } from '../peon/Modelo.js'
 import { Alfil } from '../alfil/Modelo.js'
 import { Caballo } from '../caballo/Modelo.js'
 import { Reina } from '../reina/Modelo.js'
+import { Torre } from '../torre/Modelo.js'
 
 class Tablero extends THREE.Object3D {
   constructor() {
@@ -51,7 +52,7 @@ class Tablero extends THREE.Object3D {
     const reyModel = new Rey()
     const peonBlanco = new Peon()
     const peonNegro = new Peon()
-
+    const torreModel = new Torre()
     // Función para añadir piezas
     const addPiece = (model3D, strategy, fila, col, team) => {
       const piece = new ChessPiece(model3D, strategy)
@@ -74,10 +75,11 @@ class Tablero extends THREE.Object3D {
 
     // Colocación de piezas con instancias
 
-    addPiece(alfilModel, new BishopMovement(), 7, 7, 'black')
+    addPiece(alfilModel, new BishopMovement(), 7, 6, 'black')
     addPiece(caballoModel, new KnightMovement(), 0, 1, 'white')
     addPiece(reinaModel, new QueenMovement(), 0, 3, 'white')
     addPiece(reyModel, new KingMovement(), 0, 4, 'white')
+    addPiece(torreModel, new RookMovement(), 7 , 7, 'black' )
 
     // Peones: clonamos modelo si queremos que sean independientes
     for (let col = 0; col < 8; col++) {

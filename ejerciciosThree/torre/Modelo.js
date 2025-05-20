@@ -4,9 +4,9 @@ import * as CSG from '../libs/three-bvh-csg.js'
 import { RotationAnimator } from './Animator.js'
 
 class Torre extends THREE.Object3D {
-    constructor(gui,titleGui) {
+    constructor() {
         super();
-        this.createGUI(gui,titleGui);
+        
 
         const textureLoader = new THREE.TextureLoader();
         const bumpTexture = textureLoader.load('./textura/escamas.jpg');

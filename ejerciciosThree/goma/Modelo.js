@@ -23,7 +23,7 @@ class Modelo extends THREE.Object3D{
         shape.splineThru(puntos);
         shape.lineTo(-0.025, -0.05);
         shape.moveTo(0.025, -0.05);
-        var options = { depth: 0.02, steps: 2, curveSegments : 4, bevelThickness: 0.01 , bevelSize: 0.01 , bevelSegments: 15 };
+        var options = { depth: 0.02, steps: 2, curveSegments : 4, bevelThickness: 0.01 , bevelSize: 0.01 , bevelSegments: 7 };
         var cuerpo = new THREE. ExtrudeGeometry ( shape , options );
 
         var borrador = new THREE.BoxGeometry(1, 0.1, 1);
