@@ -89,7 +89,6 @@ class Torre extends THREE.Object3D {
         //--------------------------------------------------------------------------------------------------
 
         var piernas = this.createPiernas();
-        this.updatePiernasRotation(0);
 
         //--------------------------------------------------------------------------------------------------
         //--------------------------------------------------------------------------------------------------
@@ -104,9 +103,14 @@ class Torre extends THREE.Object3D {
         //--------------------------------------------------------------------------------------------------
 
         this.bocaRotationAnimator = new RotationAnimator();
-        this.tailBaseAnimator = new RotationAnimator();
+        this.tailBaseAnimator = new RotationAnimator(); // Necesitas un animador por cada segmento
         this.tailMidAnimator = new RotationAnimator();
         this.tailTipAnimator = new RotationAnimator();
+        this.piernasRotationAnimator1 = new RotationAnimator(); // Animador para pierna1
+        this.piernasRotationAnimator2 = new RotationAnimator(); // Animador para pierna2
+        this.piernasRotationAnimator3 = new RotationAnimator(); // Animador para pierna3
+        this.piernasRotationAnimator4 = new RotationAnimator(); // Animador para pierna4
+        this.updatePiernasRotation(0);
     }
 
     createGUI(gui, titleGui) {
@@ -444,53 +448,33 @@ class Torre extends THREE.Object3D {
     }
 
     // Corregido: Nuevo nombre para la función que actualiza la rotación y uso de las referencias almacenadas
-    /*updateTailRotation(valor) {
-        // Aplicar rotación a los segmentos si existen
-        // Aplicamos las rotaciones con diferentes factores para simular una curva
-        // Originalmente la base tenía /4, la mitad /2 y la punta /1
-        if (this.segmentoBase) {
-             this.segmentoBase.rotation.y = valor / 4;
-        }
-        if (this.segmentoMitad) {
-             this.segmentoMitad.rotation.y = valor / 2;
-        }
-         if (this.segmentoPunta) {
-             this.segmentoPunta.rotation.y = valor;
-        }
-    }*/
-   updateTailRotation(valor) {
-        // This function will now *trigger* the animation, not directly set the rotation.
-        // We need to define the target rotation for the segment.
-        // The `valor` from the GUI will be our target.
+    updateTailRotation(valor) {
+        const targetBase = new THREE.Euler(0, valor / 4, 0);
+        const targetMid = new THREE.Euler(0, valor / 2, 0);
+        const targetTip = new THREE.Euler(0, valor, 0);
 
-        // Define the target Euler angles for each segment
-        const targetBaseRotation = new THREE.Euler(0, valor / 4, 0);
-        const targetMitadRotation = new THREE.Euler(0, valor / 2, 0);
-        const targetPuntaRotation = new THREE.Euler(0, valor, 0);
-
-        // Animate each segment's rotation
         if (this.segmentoBase) {
-            this.tailRotationAnimator.setAndStart(
+            this.tailBaseAnimator.setAndStart(
                 this.segmentoBase.rotation,
-                targetBaseRotation,
-                500 // Animation duration in milliseconds
+                targetBase,
+                500
             );
         }
         if (this.segmentoMitad) {
-            this.tailRotationAnimator.setAndStart(
+            this.tailMidAnimator.setAndStart(
                 this.segmentoMitad.rotation,
-                targetMitadRotation,
+                targetMid,
                 500
             );
         }
         if (this.segmentoPunta) {
-            this.tailRotationAnimator.setAndStart(
+            this.tailTipAnimator.setAndStart(
                 this.segmentoPunta.rotation,
-                targetPuntaRotation,
+                targetTip,
                 500
             );
-        }
-    }
+        }
+    }
 
     /*updateBocaRotation(valor) {
         this.boca.rotation.x = valor;
@@ -505,22 +489,47 @@ class Torre extends THREE.Object3D {
         );
     }
 
-    updatePiernasRotation(valor) {
+     updatePiernasRotation(valor) {
+        // Las posiciones de las piernas se establecen una vez y se mantienen.
+        // Solo animaremos la rotación.
+        this.pierna1.position.set(0.022, 0, 0.04);
+        this.pierna2.position.set(0.022, 0, -0.04);
+        this.pierna3.position.set(-0.022, 0, -0.04);
+        this.pierna4.position.set(-0.022, 0, 0.04);
+
+        const duration = 300; // Duración de la animación en milisegundos
+
         if (this.pierna1) {
-             this.pierna1.rotation.x = valor;
-             this.pierna1.position.set(0.022, 0, 0.04);
+            const targetRotation1 = new THREE.Euler(valor, 0, 0);
+            this.piernasRotationAnimator1.setAndStart(
+                this.pierna1.rotation,
+                targetRotation1,
+                duration
+            );
         }
         if (this.pierna2) {
-             this.pierna2.rotation.x = valor;
-             this.pierna2.position.set(0.022, 0, -0.04);
+            const targetRotation2 = new THREE.Euler(valor, 0, 0);
+            this.piernasRotationAnimator2.setAndStart(
+                this.pierna2.rotation,
+                targetRotation2,
+                duration
+            );
         }
         if (this.pierna3) {
-             this.pierna3.rotation.x = -valor;
-             this.pierna3.position.set(-0.022, 0, -0.04);
+            const targetRotation3 = new THREE.Euler(-valor, 0, 0); // Rotación opuesta
+            this.piernasRotationAnimator3.setAndStart(
+                this.pierna3.rotation,
+                targetRotation3,
+                duration
+            );
         }
         if (this.pierna4) {
-             this.pierna4.rotation.x = -valor;
-             this.pierna4.position.set(-0.022, 0, 0.04);
+            const targetRotation4 = new THREE.Euler(-valor, 0, 0); // Rotación opuesta
+            this.piernasRotationAnimator4.setAndStart(
+                this.pierna4.rotation,
+                targetRotation4,
+                duration
+            );
         }
     }
 
