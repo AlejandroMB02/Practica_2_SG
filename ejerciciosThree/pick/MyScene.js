@@ -54,6 +54,10 @@ class MyScene extends THREE.Scene {
         ev.stopPropagation(); ev.preventDefault();
       }
     }, true);
+    // Animation variables for walking
+    this.model.torre.walkAnimationTime = 0;
+    this.model.torre.walkSpeed = 0.1; // Adjust this value to control walking speed
+    this.model.torre.walkAmplitude = Math.PI / 2; //
   }
 
   onPointerDown(event) {
@@ -120,6 +124,7 @@ class MyScene extends THREE.Scene {
         const target = this.model.getPiece(destF, destC);
 
         if (target && target.team !== this.currentTurnTeam) {
+          target
           const perRow = 4, spacing = 0.06, rowSpacing = 0.15;
           const idx = (target.team === 'white' ? this.capturedWhite : this.capturedBlack).length;
           const baseX = target.team === 'white' ? -0.15 : 1.12;
@@ -128,15 +133,15 @@ class MyScene extends THREE.Scene {
           if (target.team === 'white') this.capturedWhite.push(target);
           else this.capturedBlack.push(target);
           new TWEEN.Tween(target.position)
-            .to({ y: 0.12 }, 200)
+            .to({ y: 0.12 }, 1200)
             .easing(TWEEN.Easing.Quadratic.Out)
             .onComplete(() => {
               new TWEEN.Tween(target.position)
-                .to({ x: capX, y: 0.12, z: capZ }, 400)
+                .to({ x: capX, y: 0.12, z: capZ }, 1200)
                 .easing(TWEEN.Easing.Quadratic.InOut)
                 .onComplete(() => {
                   new TWEEN.Tween(target.position)
-                    .to({ y: 0.01 }, 200)
+                    .to({ y: 0.01 }, 1200)
                     .easing(TWEEN.Easing.Quadratic.In)
                     .start();
                 })
@@ -151,11 +156,11 @@ class MyScene extends THREE.Scene {
         const destX = casilla.position.x;
         const destZ = casilla.position.z;
         new TWEEN.Tween(pieza.position)
-          .to({ x: destX, z: destZ }, 400)
+          .to({ x: destX, z: destZ }, 1200)
           .easing(TWEEN.Easing.Quadratic.InOut)
           .onComplete(() => {
             new TWEEN.Tween(pieza.position)
-              .to({ y: 0.01 }, 200)
+              .to({ y: 0.01 }, 1200)
               .easing(TWEEN.Easing.Quadratic.In)
               .start();
             pieza.userData = { fila: destF, columna: destC };
@@ -269,6 +274,19 @@ class MyScene extends THREE.Scene {
     this.model.update();
     requestAnimationFrame(() => this.update());
   }
+  caminar() {
+  for (let i = 0; i < 4; i++) {
+    // Update walk animation time
+    this.walkAnimationTime += this.walkSpeed;
+    // Calculate the value for leg rotation using a sine wave
+    // This will create a smooth back-and-forth motion
+    const piernasRotationValue = Math.sin(this.walkAnimationTime) * this.walkAmplitude;
+
+    // Apply the rotation to the model's legs
+    this.model.updatePiernasRotation(piernasRotationValue);
+    requestAnimationFrame(() => this.update())
+  }
+}
 }
 
 $(function () {

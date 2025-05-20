@@ -53,6 +53,10 @@ class Tablero extends THREE.Object3D {
     const peonBlanco = new Peon()
     const peonNegro = new Peon()
     const torreModel = new Torre()
+    torreModel.translateY(0.03);
+
+    this.torre = new THREE.Object3D();
+    this.torre = torreModel;
     // Función para añadir piezas
     const addPiece = (model3D, strategy, fila, col, team) => {
       const piece = new ChessPiece(model3D, strategy)
