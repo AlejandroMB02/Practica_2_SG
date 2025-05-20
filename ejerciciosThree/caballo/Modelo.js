@@ -45,8 +45,8 @@ class Caballo extends THREE.Object3D {
         });
 
 //Geometrias
-var ojo_izq = new THREE.SphereGeometry(0.005, 50, 50);
-var ojo_der = new THREE.SphereGeometry(0.005, 50, 50);
+var ojo_izq = new THREE.SphereGeometry(0.005);
+var ojo_der = new THREE.SphereGeometry(0.005);
 
 //Transformaciones
 ojo_izq.scale(1,1.5,1);

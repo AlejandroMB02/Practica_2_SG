@@ -33,19 +33,19 @@ class Peon extends THREE.Object3D{
         //***************************************
 
         //Geometrias
-        var ojo_izq = new THREE.SphereGeometry(0.005, 50, 50);
-        var ojo_der = new THREE.SphereGeometry(0.005, 50, 50);
+        var ojo_izq = new THREE.SphereGeometry(0.005);
+        var ojo_der = new THREE.SphereGeometry(0.005);
 
-        var pie_izq = new THREE.SphereGeometry(0.01, 50, 50);
-        var pie_der = new THREE.SphereGeometry(0.01, 50, 50);
+        var pie_izq = new THREE.SphereGeometry(0.01);
+        var pie_der = new THREE.SphereGeometry(0.01);
         var suela = new THREE.BoxGeometry(0.1, 0.1, 0.1);
         var pierna_izq = new THREE.CylinderGeometry(0.0025, 0.0025, 0.015);
         var pierna_der = new THREE.CylinderGeometry(0.0025, 0.0025, 0.015);
 
         var brazo_izq = new THREE.CylinderGeometry(0.0025, 0.0025, 0.015);
         var brazo_der = new THREE.CylinderGeometry(0.0025, 0.0025, 0.015);
-        var mano_izq = new THREE.SphereGeometry(0.005, 50, 50);
-        var mano_der = new THREE.SphereGeometry(0.005, 50, 50);
+        var mano_izq = new THREE.SphereGeometry(0.005);
+        var mano_der = new THREE.SphereGeometry(0.005);
 
         //Transformaciones
         ojo_izq.scale(1,1.5,1);

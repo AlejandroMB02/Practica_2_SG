@@ -59,8 +59,8 @@ class Reina extends THREE.Object3D{
         var geometria = new THREE.LatheGeometry (points, 24, 0, Math.PI*2);
         geometria.scale(0.4, 0.6, 0.4); //Escalamos la geometría para que se vea mejor
         geometria.translate(0,-0.0048+0.0075,0);
-        var ojo_izq = new THREE.SphereGeometry(0.005, 50, 50);
-        var ojo_der = new THREE.SphereGeometry(0.005, 50, 50);
+        var ojo_izq = new THREE.SphereGeometry(0.005);
+        var ojo_der = new THREE.SphereGeometry(0.005);
         
         //Transformaciones
         ojo_izq.scale(0.1,0.2,0.1);

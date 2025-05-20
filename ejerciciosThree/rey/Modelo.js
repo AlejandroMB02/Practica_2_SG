@@ -21,11 +21,11 @@ class Rey extends THREE.Object3D{
         });
 
         //Geometrias
-        var ojo_izq = new THREE.SphereGeometry(0.005, 50, 50);
-        var ojo_der = new THREE.SphereGeometry(0.005, 50, 50);
+        var ojo_izq = new THREE.SphereGeometry(0.005);
+        var ojo_der = new THREE.SphereGeometry(0.005);
 
-        var base_bigote_izq = new THREE.SphereGeometry(0.005, 50, 50);
-        var base_bigote_der = new THREE.SphereGeometry(0.005, 50, 50);
+        var base_bigote_izq = new THREE.SphereGeometry(0.005);
+        var base_bigote_der = new THREE.SphereGeometry(0.005);
 
         var cuerpo_bigote_izq = new THREE.CylinderGeometry(0.0005, 0.006, 0.01);
         var cuerpo_bigote_der = new THREE.CylinderGeometry(0.0005, 0.006, 0.01);
