@@ -1,5 +1,7 @@
-import * as THREE from '../libs/three.module.js';
-import * as CSG from '../libs/three-bvh-csg.js';
+import * as THREE from '../libs/three.module.js'
+import * as TWEEN from '../libs/tween.module.js'
+import * as CSG from '../libs/three-bvh-csg.js'
+import { CombatAnimator } from './Animator.js'
 
 class Torre extends THREE.Object3D {
     constructor(gui,titleGui) {
@@ -96,6 +98,12 @@ class Torre extends THREE.Object3D {
         this.add(this.cola); 
         this.add(boca);
         this.add(piernas);
+
+        //--------------------------------------------------------------------------------------------------
+        // Animaciones
+        //--------------------------------------------------------------------------------------------------
+
+        this.anim = new CombatAnimator ();
     }
 
     createGUI(gui, titleGui) {
@@ -473,8 +481,7 @@ class Torre extends THREE.Object3D {
     }
 
     update() {
-        // Este método queda vacío si la animación solo depende del evento 'onChange' del GUI.
-        // Si necesitaras animación continua (ej: mover la cola automáticamente), la lógica iría aquí.
+        TWEEN.update();
     }
 }
 
