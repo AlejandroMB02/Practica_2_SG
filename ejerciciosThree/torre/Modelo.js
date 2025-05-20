@@ -9,7 +9,7 @@ class Torre extends THREE.Object3D {
         
 
         const textureLoader = new THREE.TextureLoader();
-        const bumpTexture = textureLoader.load('./textura/escamas.jpg');
+        const bumpTexture = textureLoader.load('./Texturas/escamas.jpg');
         this.material_escamas = new THREE.MeshPhongMaterial({
         color: 0x535B15, // Color base del material
             bumpMap: bumpTexture, // Asigna tu textura de relieve

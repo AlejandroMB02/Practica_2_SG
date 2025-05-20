@@ -11,6 +11,8 @@ import { Alfil } from '../alfil/Modelo.js'
 import { Caballo } from '../caballo/Modelo.js'
 import { Reina } from '../reina/Modelo.js'
 import { Torre } from '../torre/Modelo.js'
+import { Maceta } from '../maceta/Modelo.js'
+import { Desk } from '../desk/Modelo.js'
 
 class Tablero extends THREE.Object3D {
   constructor() {
@@ -46,6 +48,14 @@ class Tablero extends THREE.Object3D {
 
     // Modelos previamente instanciados
 
+    this.macetaModel = new Maceta();
+    this.macetaModel.scale.set(0.18, 0.18, 0.18);
+    this.macetaModel.position.set(-1.1, -0.02, -0.5);
+    this.add(this.macetaModel);
+    this.deskModel = new Desk();
+    this.deskModel.scale.set(3, 3, 3);
+    this.deskModel.position.set(0, -0.888, 0);
+    this.add(this.deskModel);
     const alfilModel = new Alfil()
     const caballoModel = new Caballo()
     const reinaModel = new Reina()

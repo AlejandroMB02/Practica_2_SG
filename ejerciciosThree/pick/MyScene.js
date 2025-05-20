@@ -16,7 +16,7 @@ class MyScene extends THREE.Scene {
     // Parámetros de la animación de introducción
     this.inIntro = true;
     this.introAngle = 0;
-    this.introRadius = 3;    // distancia inicial panorámica
+    this.introRadius = 12;    // distancia inicial panorámica
     this.introHeight = 2;    // altura de la cámara en la introducción
 
     this.renderer = this.createRenderer(myCanvas);
@@ -133,15 +133,15 @@ class MyScene extends THREE.Scene {
           if (target.team === 'white') this.capturedWhite.push(target);
           else this.capturedBlack.push(target);
           new TWEEN.Tween(target.position)
-            .to({ y: 0.12 }, 1200)
+            .to({ y: 0.12 }, 300)
             .easing(TWEEN.Easing.Quadratic.Out)
             .onComplete(() => {
               new TWEEN.Tween(target.position)
-                .to({ x: capX, y: 0.12, z: capZ }, 1200)
+                .to({ x: capX, y: 0.12, z: capZ }, 300)
                 .easing(TWEEN.Easing.Quadratic.InOut)
                 .onComplete(() => {
                   new TWEEN.Tween(target.position)
-                    .to({ y: 0.01 }, 1200)
+                    .to({ y: 0.01 }, 300)
                     .easing(TWEEN.Easing.Quadratic.In)
                     .start();
                 })
@@ -156,11 +156,11 @@ class MyScene extends THREE.Scene {
         const destX = casilla.position.x;
         const destZ = casilla.position.z;
         new TWEEN.Tween(pieza.position)
-          .to({ x: destX, z: destZ }, 1200)
+          .to({ x: destX, z: destZ }, 300)
           .easing(TWEEN.Easing.Quadratic.InOut)
           .onComplete(() => {
             new TWEEN.Tween(pieza.position)
-              .to({ y: 0.01 }, 1200)
+              .to({ y: 0.01 }, 300)
               .easing(TWEEN.Easing.Quadratic.In)
               .start();
             pieza.userData = { fila: destF, columna: destC };
@@ -185,7 +185,7 @@ class MyScene extends THREE.Scene {
   }
 
   createCamera() {
-    this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10);
+    this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 100);
     // Posición inicial: panorámica o por turno
     const initDistance = this.inIntro ? this.introRadius : 1.6;
     const initY = this.inIntro ? this.introHeight : 1.5;

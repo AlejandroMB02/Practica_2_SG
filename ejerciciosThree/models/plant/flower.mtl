@@ -1,0 +1,32 @@
+# Blender 4.1.1 MTL File: 'flower.blend'
+# www.blender.org
+
+newmtl The_color_of_the_earth
+Ns 10.000000  # Reducido de 250
+Ka 1.000000 1.000000 1.000000
+Kd 0.165366 0.032838 0.014844
+Ks 0.100000 0.100000 0.100000 # Reducido de 0.5
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+
+newmtl leaf_color
+Ns 10.000000  # Reducido de 250
+Ka 1.000000 1.000000 1.000000
+Kd 0.045933 0.801493 0.004191
+Ks 0.100000 0.100000 0.100000 # Reducido de 0.5
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+
+newmtl the_color_of_the_pot
+Ns 10.000000  # Reducido de 250
+Ka 1.000000 1.000000 1.000000
+Kd 0.382102 0.141359 0.056840
+Ks 0.100000 0.100000 0.100000 # Reducido de 0.5
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
