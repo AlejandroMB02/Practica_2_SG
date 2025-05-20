@@ -46,130 +46,155 @@ class MyScene extends THREE.Scene {
       }
     }, true)
   }
+onPointerDown(event) {
+  // 1) Coordenadas normalizadas del puntero
+  const rect = this.renderer.domElement.getBoundingClientRect();
+  this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  this.raycaster.setFromCamera(this.mouse, this.camera);
 
- onPointerDown(event) {
-  // 1) Coordenadas normalizadas
-  const rect = this.renderer.domElement.getBoundingClientRect()
-  this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
-  this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
-  this.raycaster.setFromCamera(this.mouse, this.camera)
-
-  // 2) Si no hay pieza seleccionada: intento SELECT
+  // 2) Si no hay pieza seleccionada: intento seleccionar
   if (!this.piezaSeleccionada) {
-    const hits = this.raycaster.intersectObjects(this.piezas)
+    const hits = this.raycaster.intersectObjects(this.piezas,false);
     if (hits.length > 0) {
-      const pieza = hits[0].object
+      const pieza = hits[0].object;
       if (pieza.team === this.currentTurnTeam) {
-        // evitamos que TrackballControls reciba este evento
-        event.stopPropagation()
-        event.preventDefault()
-        this.piezaSeleccionada = pieza
-        this.cameraControl.noRotate = true
-        this.cameraControl.noPan    = true
+        event.stopPropagation();
+        event.preventDefault();
+        this.piezaSeleccionada = pieza;
+        this.cameraControl.noRotate = true;
+        this.cameraControl.noPan    = true;
 
-        // animación de elevación
+        // animar elevación al seleccionarla
         new TWEEN.Tween(pieza.position)
           .to({ y: 0.12 }, 300)
           .easing(TWEEN.Easing.Quadratic.Out)
-          .start()
+          .start();
 
-        // tras subir un poco, resaltamos movimientos
-        setTimeout(() => this.model.resaltarCasillasLegales(pieza), 200)
+        // resaltar movimientos tras un pequeño delay
+        setTimeout(() => this.model.resaltarCasillasLegales(pieza), 200);
       }
     }
-    return
+    return;
   }
 
-  // 3) Si ya había una pieza seleccionada, permitimos cambio de selección
-  const piezaHits = this.raycaster.intersectObjects(this.piezas)
+  // 3) Si ya había selección, permito cambiar a otra de mi equipo
+  const piezaHits = this.raycaster.intersectObjects(this.piezas, false);
   if (piezaHits.length > 0) {
-    const otra = piezaHits[0].object
+    const otra = piezaHits[0].object;
     if (otra.team === this.currentTurnTeam && otra !== this.piezaSeleccionada) {
-      event.stopPropagation()
-      event.preventDefault()
-      // bajar la anterior antes de cambiar
+      event.stopPropagation();
+      event.preventDefault();
+      // bajar la anterior
       new TWEEN.Tween(this.piezaSeleccionada.position)
-        .to({ y: 0.04 }, 200)
+        .to({ y: 0.01 }, 200)
         .easing(TWEEN.Easing.Quadratic.In)
-        .start()
-      this.model.limpiarResaltado()
-      this.piezaSeleccionada = otra
-      // elevar la nueva
+        .start();
+      this.model.limpiarResaltado();
+      this.piezaSeleccionada = otra;
+      // subir la nueva
       new TWEEN.Tween(otra.position)
         .to({ y: 0.12 }, 300)
         .easing(TWEEN.Easing.Quadratic.Out)
-        .start()
-      setTimeout(() => this.model.resaltarCasillasLegales(otra), 200)
-      return
+        .start();
+      setTimeout(() => this.model.resaltarCasillasLegales(otra), 200);
+      return;
     }
   }
 
-  // 4) Intento mover / capturar en una casilla resaltada
-  const sqHits = this.raycaster.intersectObjects(this.model.squares)
+  // 4) Intento mover / capturar en casilla resaltada
+  const sqHits = this.raycaster.intersectObjects(this.model.squares);
   if (sqHits.length > 0) {
-    const casilla = sqHits[0].object
+    const casilla = sqHits[0].object;
     if (casilla.userData.resaltada) {
-      const destF = casilla.userData.fila
-      const destC = casilla.userData.columna
-      // captura si hay enemigo
-      const target = this.model.getPiece(destF, destC)
+      event.stopPropagation();
+      event.preventDefault();
+
+      const destF = casilla.userData.fila;
+      const destC = casilla.userData.columna;
+      const pieza = this.piezaSeleccionada;
+
+      // --- captura con animación ---
+      const target = this.model.getPiece(destF, destC);
       if (target && target.team !== this.currentTurnTeam) {
-        const arr = target.team === 'white'
-          ? this.capturedWhite
-          : this.capturedBlack
-        arr.push(target)
-        // expulsar al lateral
-        target.position.set(
-          -0.5 + (target.team==='white'? -0.15 : 1.25),
-          0.02,
-          -0.3 + (arr.length - 1) * 0.06
-        )
-        target.userData.captured = true
-        this.model.pieces = this.model.pieces.filter(p => p !== target)
-        this.piezas       = this.piezas.filter(p => p !== target)
+        // parámetros de layout de cementerio
+        const perRow     = 4;
+        const spacing    = 0.06;
+        const rowSpacing = 0.15;
+        const idx        = (target.team === 'white' ? this.capturedWhite : this.capturedBlack).length;
+        const baseX      = target.team === 'white' ? -0.15 : 1.25;
+        const capX       = baseX + Math.floor(idx / perRow) * rowSpacing;
+        const capZ       = -0.3   + (idx % perRow) * spacing;
+
+        // añadir al array correspondiente
+        if (target.team === 'white') this.capturedWhite.push(target);
+        else                        this.capturedBlack.push(target);
+
+        // secuencia de tweens: levantar → deslizar → soltar
+        new TWEEN.Tween(target.position)
+          .to({ y: 0.12 }, 200)
+          .easing(TWEEN.Easing.Quadratic.Out)
+          .onComplete(() => {
+            new TWEEN.Tween(target.position)
+              .to({ x: capX, y: 0.12, z: capZ }, 400)
+              .easing(TWEEN.Easing.Quadratic.InOut)
+              .onComplete(() => {
+                new TWEEN.Tween(target.position)
+                  .to({ y: 0.01 }, 200)
+                  .easing(TWEEN.Easing.Quadratic.In)
+                  .start();
+              })
+              .start();
+          })
+          .start();
+
+        target.userData.captured = true;
+        this.model.pieces = this.model.pieces.filter(p => p !== target);
+        this.piezas       = this.piezas.filter(p => p !== target);
       }
 
-      const pieza = this.piezaSeleccionada
-      const destX = casilla.position.x
-      const destZ = casilla.position.z
+      // --- mover la pieza seleccionada con tween ---
+      const destX = casilla.position.x;
+      const destZ = casilla.position.z;
 
-      // 1) deslizamiento horizontal
       new TWEEN.Tween(pieza.position)
         .to({ x: destX, z: destZ }, 400)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .onComplete(() => {
-          // 2) bajada al tablero
+          // bajar tras el desliz
           new TWEEN.Tween(pieza.position)
-            .to({ y: 0.04 }, 200)
+            .to({ y: 0.01 }, 200)
             .easing(TWEEN.Easing.Quadratic.In)
-            .start()
+            .start();
           // actualizar estado interno
-          pieza.userData = { fila: destF, columna: destC }
-          this.model.limpiarResaltado()
-          this.piezaSeleccionada = null
-          this.cameraControl.noRotate = false
-          this.cameraControl.noPan    = false
+          pieza.userData = { fila: destF, columna: destC };
+          this.model.limpiarResaltado();
+          this.piezaSeleccionada = null;
+          this.cameraControl.noRotate = false;
+          this.cameraControl.noPan    = false;
           // cambiar turno
-          this.currentTurnTeam =
-            this.currentTurnTeam === 'white' ? 'black' : 'white'
+          this.currentTurnTeam = (this.currentTurnTeam === 'white') ? 'black' : 'white';
         })
-        .start()
+        .start();
 
-      return
+      return;
     }
   }
 
-  // 5) clic fuera o casilla no resaltada: cancelar selección
-  this.model.limpiarResaltado()
-  // si estaba elevada, bajarla
-  new TWEEN.Tween(this.piezaSeleccionada.position)
-    .to({ y: 0.04 }, 200)
-    .easing(TWEEN.Easing.Quadratic.In)
-    .start()
-  this.piezaSeleccionada = null
-  this.cameraControl.noRotate = false
-  this.cameraControl.noPan    = false
+  // 5) Clic fuera: cancelar selección y bajar si estaba elevada
+  this.model.limpiarResaltado();
+  if (this.piezaSeleccionada) {
+    new TWEEN.Tween(this.piezaSeleccionada.position)
+      .to({ y: 0.04 }, 200)
+      .easing(TWEEN.Easing.Quadratic.In)
+      .start();
+  }
+  this.piezaSeleccionada = null;
+  this.cameraControl.noRotate = false;
+  this.cameraControl.noPan    = false;
 }
+
+
 
   createCamera() {
     this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10)
