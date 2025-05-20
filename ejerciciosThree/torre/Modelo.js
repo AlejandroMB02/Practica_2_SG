@@ -8,6 +8,36 @@ class Torre extends THREE.Object3D {
         super();
         this.createGUI(gui,titleGui);
 
+        const textureLoader = new THREE.TextureLoader();
+        const bumpTexture = textureLoader.load('./textura/escamas.jpg');
+        this.material_escamas = new THREE.MeshPhongMaterial({
+        color: 0x535B15, // Color base del material
+            bumpMap: bumpTexture, // Asigna tu textura de relieve
+            bumpScale: 10 // Ajusta la intensidad del relieve (por defecto es 1)
+        });
+        this.metalMaterial = new THREE.MeshStandardMaterial({
+            color: 0xCCCCCC,
+            roughness: 0.3,
+            metalness: 0.5,
+        });
+        this.metalQuirurgico = new THREE.MeshStandardMaterial({
+            color: 0xFFFFFF,
+            roughness: 0.3,
+            metalness: 0.5,
+        });
+        this.MaterialVerde = new THREE.MeshStandardMaterial({
+            color: 0x535B15,
+            roughness: 0.3,
+            metalness: 0.5,
+        });
+        this.material_negro_brillante = new THREE.MeshPhongMaterial({
+                    color: 0x000000,
+                    emissive: 0x072534,
+                    specular: 0xffffff, // Color del reflejo especular
+                    shininess: 100,    // Nivel de brillo (0 a 100)
+                    flatShading: false
+        });
+
         //--------------------------------------------------------------------------------------------------
         // COLA
         //--------------------------------------------------------------------------------------------------
@@ -62,11 +92,11 @@ class Torre extends THREE.Object3D {
         geom_cil_2.translate(0, 0, -0.035);
         geom_eje.translate(0, 0, -0.035);
 
-        var apoyo1_brush = new CSG.Brush(geom_apoyo_1, this.material);
-        var apoyo2_brush = new CSG.Brush(geom_apoyo_2, this.material);
-        var cil1_brush = new CSG.Brush(geom_cil_1, this.material);
-        var cil2_brush = new CSG.Brush(geom_cil_2, this.material);
-        var eje_brush = new CSG.Brush(geom_eje, this.material);
+        var apoyo1_brush = new CSG.Brush(geom_apoyo_1, this.metalMaterial);
+        var apoyo2_brush = new CSG.Brush(geom_apoyo_2, this.metalMaterial);
+        var cil1_brush = new CSG.Brush(geom_cil_1, this.metalMaterial);
+        var cil2_brush = new CSG.Brush(geom_cil_2, this.metalMaterial);
+        var eje_brush = new CSG.Brush(geom_eje, this.metalMaterial);
 
         //Operaciones
         var evaluador = new CSG.Evaluator();
@@ -159,10 +189,10 @@ class Torre extends THREE.Object3D {
         var pierna3 = new THREE.Object3D();
         var pierna4 = new THREE.Object3D();
         for (let i = 0; i < 4; i++) {
-            var cadera = new THREE.Mesh(cadera_geom, this.material);
-            var rodilla = new THREE.Mesh(rodilla_geom, this.material);
-            var muslo = new THREE.Mesh(muslo_geom, this.material);
-            var pie = new THREE.Mesh(pie_geom, this.material);
+            var cadera = new THREE.Mesh(cadera_geom, this.material_escamas);
+            var rodilla = new THREE.Mesh(rodilla_geom, this.material_escamas);
+            var muslo = new THREE.Mesh(muslo_geom, this.material_escamas);
+            var pie = new THREE.Mesh(pie_geom, this.material_escamas);
             if(i == 0){
                 pierna1.add(cadera);
                 pierna1.add(rodilla);
@@ -214,7 +244,9 @@ class Torre extends THREE.Object3D {
         var bocaGeom = new THREE.ExtrudeGeometry ( shape , options );
         bocaGeom.rotateX(-Math.PI/2);
         bocaGeom.translate(0, 0.026, 0);
-        var bocaMesh = new THREE.Mesh(bocaGeom, this.material); //Cubo superior
+        bocaGeom.computeVertexNormals(); // Esencial para la iluminación y bump maps
+        bocaGeom.computeBoundingBox(); // Necesario para algunas operaciones de UV y si usas Box3
+        var bocaMesh = new THREE.Mesh(bocaGeom, this.MaterialVerde); //Cubo superior
 
         var geom_apoyo_1 = new THREE.BoxGeometry(0.003, 0.012, 0.01);
         var geom_apoyo_2 = new THREE.BoxGeometry(0.003, 0.012, 0.01);
@@ -259,7 +291,7 @@ class Torre extends THREE.Object3D {
         const grupoDientes1 = new THREE.Group();
         for (let j = 0; j < 10; j++) {
             const geometry = new THREE.CylinderGeometry(0.0045, 0, 0.008);
-            const diente = new THREE.Mesh(geometry, this.material);
+            const diente = new THREE.Mesh(geometry, this.metalQuirurgico);
             diente.position.x = 0.01;
             diente.position.y = 0.017;
             diente.position.z = 0.045 - (j*0.0045);
@@ -268,7 +300,7 @@ class Torre extends THREE.Object3D {
         const grupoDientes2 = new THREE.Group();
         for (let j = 0; j < 10; j++) {
             const geometry = new THREE.CylinderGeometry(0.0045, 0, 0.008);
-            const diente = new THREE.Mesh(geometry, this.material);
+            const diente = new THREE.Mesh(geometry, this.metalQuirurgico);
             diente.position.x = -0.01;
             diente.position.y = 0.017;
             diente.position.z = 0.045 - (j*0.0045);
@@ -277,7 +309,7 @@ class Torre extends THREE.Object3D {
         const grupoDientes3 = new THREE.Group();
         for (let j = 0; j < 5; j++) {
             const geometry = new THREE.CylinderGeometry(0.0045, 0, 0.008);
-            const diente = new THREE.Mesh(geometry, this.material);
+            const diente = new THREE.Mesh(geometry, this.metalQuirurgico);
             diente.position.x = 0.01 - (j*0.0045);
             diente.position.y = 0.017;
             diente.position.z = 0.045;
@@ -317,10 +349,10 @@ class Torre extends THREE.Object3D {
         cuenca_izq.rotateX(-Math.PI/1.9);
         cuenca_izq.translate(-0.015, 0.052, 0.035);
 
-        var ojo_der_mesh = new THREE.Mesh(ojo_der, this.material);
-        var ojo_izq_mesh = new THREE.Mesh(ojo_izq, this.material);
-        var cuenca_der_mesh = new THREE.Mesh(cuenca_der, this.material);
-        var cuenca_izq_mesh = new THREE.Mesh(cuenca_izq, this.material);
+        var ojo_der_mesh = new THREE.Mesh(ojo_der, this.material_negro_brillante);
+        var ojo_izq_mesh = new THREE.Mesh(ojo_izq, this.material_negro_brillante);
+        var cuenca_der_mesh = new THREE.Mesh(cuenca_der, this.MaterialVerde);
+        var cuenca_izq_mesh = new THREE.Mesh(cuenca_izq, this.MaterialVerde);
 
         grupoOjos.add(ojo_der_mesh);
         grupoOjos.add(ojo_izq_mesh);
@@ -356,8 +388,8 @@ class Torre extends THREE.Object3D {
         puntaGeo.rotateX(-Math.PI / 2);
 
         // Crear los Mesh (combinación de geometría y material)
-        var puntaMesh = new THREE.Mesh(puntaGeo, this.material);
-        var ejeMesh = new THREE.Mesh(ejePuntaGeo, this.material);
+        var puntaMesh = new THREE.Mesh(puntaGeo, this.material_escamas);
+        var ejeMesh = new THREE.Mesh(ejePuntaGeo, this.material_escamas);
 
         // Crear un Object3D que servirá como el nodo de transformación para este segmento (la punta)
         var segmento = new THREE.Object3D();
@@ -392,8 +424,8 @@ class Torre extends THREE.Object3D {
         mitadGeo.rotateX(-Math.PI / 2);
 
         // Crear los Mesh
-        var mitadMesh = new THREE.Mesh(mitadGeo, this.material);
-        var ejeMesh = new THREE.Mesh(ejeMitadGeo, this.material);
+        var mitadMesh = new THREE.Mesh(mitadGeo, this.material_escamas);
+        var ejeMesh = new THREE.Mesh(ejeMitadGeo, this.material_escamas);
 
         // Crear un Object3D que servirá como el nodo de transformación para este segmento (la mitad)
         var segmento = new THREE.Object3D();
@@ -428,8 +460,8 @@ class Torre extends THREE.Object3D {
         baseGeo.rotateX(-Math.PI / 2);
 
         // Crear los Mesh
-        var baseMesh = new THREE.Mesh(baseGeo, this.material);
-        var ejeMesh = new THREE.Mesh(ejeBaseGeo, this.material);
+        var baseMesh = new THREE.Mesh(baseGeo, this.material_escamas);
+        var ejeMesh = new THREE.Mesh(ejeBaseGeo, this.material_escamas);
 
         // Crear un Object3D que servirá como el nodo de transformación para este segmento (la base)
         var segmento = new THREE.Object3D();
