@@ -14,8 +14,8 @@ class Modelo extends THREE.Object3D{
 
         const materialEtiqueta = new THREE.MeshStandardMaterial({
             map: etiqueta,
-            roughness: 0
-        });
+            roughness: 0
+        });
 
         //Geometrias
         var cuerpo_central = new THREE.CylinderGeometry(0.02, 0.02, 0.1);
