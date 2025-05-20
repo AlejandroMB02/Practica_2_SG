@@ -1,19 +1,18 @@
-import * as THREE from '../libs/three.module.js'
-import * as TWEEN from '../libs/tween.module.js'
-import * as CSG from '../libs/three-bvh-csg.js'
-import { RotationAnimator } from './Animator.js'
+import * as THREE from '../libs/three.module.js';
+import * as TWEEN from '../libs/tween.module.js';
+import * as CSG from '../libs/three-bvh-csg.js';
+import { RotationAnimator } from './Animator.js';
 
 class Torre extends THREE.Object3D {
     constructor() {
         super();
         
-
         const textureLoader = new THREE.TextureLoader();
         const bumpTexture = textureLoader.load('./Texturas/escamas.jpg');
         this.material_escamas = new THREE.MeshPhongMaterial({
-        color: 0x535B15, // Color base del material
-            bumpMap: bumpTexture, // Asigna tu textura de relieve
-            bumpScale: 10 // Ajusta la intensidad del relieve (por defecto es 1)
+            color: 0x535B15,
+            bumpMap: bumpTexture,
+            bumpScale: 10
         });
         this.metalMaterial = new THREE.MeshStandardMaterial({
             color: 0xCCCCCC,
@@ -31,30 +30,21 @@ class Torre extends THREE.Object3D {
             metalness: 0.5,
         });
         this.material_negro_brillante = new THREE.MeshPhongMaterial({
-                    color: 0x000000,
-                    emissive: 0x072534,
-                    specular: 0xffffff, // Color del reflejo especular
-                    shininess: 100,    // Nivel de brillo (0 a 100)
-                    flatShading: false
+            color: 0x000000,
+            emissive: 0x072534,
+            specular: 0xffffff,
+            shininess: 100,
+            flatShading: false
         });
 
-        //--------------------------------------------------------------------------------------------------
         // COLA
-        //--------------------------------------------------------------------------------------------------
-
-        // Propiedades para almacenar las referencias a los segmentos para poder rotarlos dinámicamente
         this.segmentoPunta = null;
         this.segmentoMitad = null;
         this.segmentoBase = null;
-
-        // Crear la jerarquía de la cola llamando al método que crea la base
         this.cola = this.createCola();
         this.cola.translateZ(-0.06);
 
-        //--------------------------------------------------------------------------------------------------
         // BASE
-        //--------------------------------------------------------------------------------------------------
-
         var shape = new THREE.Shape();
         shape.moveTo(0.015, -0.05);
         shape.lineTo (0.015, 0.05);
@@ -64,7 +54,6 @@ class Torre extends THREE.Object3D {
         var options = { depth: 0.007, steps: 2, curveSegments : 4, bevelThickness: 0.005 , bevelSize: 0.005 , bevelSegments: 15 };
         var baseFijaGeom = new THREE.ExtrudeGeometry ( shape , options );
         baseFijaGeom.rotateX(Math.PI/2);
-
         var baseFija = new THREE.Mesh(baseFijaGeom, this.metalMaterial);
 
         var geom_apoyo_1 = new THREE.BoxGeometry(0.003, 0.012, 0.01);
@@ -73,7 +62,6 @@ class Torre extends THREE.Object3D {
         var geom_cil_2 = new THREE.CylinderGeometry(0.005, 0.005, 0.003);
         var geom_eje = new THREE.CylinderGeometry(0.003, 0.003, 0.04)
 
-        //Transformaciones
         geom_apoyo_1.translate(0.015, 0.007, 0);
         geom_apoyo_2.translate(-0.015, 0.007, 0);
         geom_cil_1.rotateZ(Math.PI/2);
@@ -95,7 +83,6 @@ class Torre extends THREE.Object3D {
         var cil2_brush = new CSG.Brush(geom_cil_2, this.metalMaterial);
         var eje_brush = new CSG.Brush(geom_eje, this.metalMaterial);
 
-        //Operaciones
         var evaluador = new CSG.Evaluator();
         var baseApoyo = evaluador.evaluate(apoyo1_brush, apoyo2_brush, CSG.ADDITION);
         var cilApoyo = evaluador.evaluate(cil1_brush, cil2_brush, CSG.ADDITION);
@@ -104,68 +91,53 @@ class Torre extends THREE.Object3D {
 
         this.add(apoyoFinal);
 
-        //--------------------------------------------------------------------------------------------------
         // Boca
-        //--------------------------------------------------------------------------------------------------
-
         var boca = this.createBoca();
         boca.position.set(0, 0.013, -0.035);
 
-        //--------------------------------------------------------------------------------------------------
         // Piernas
-        //--------------------------------------------------------------------------------------------------
-
         var piernas = this.createPiernas();
 
-        //--------------------------------------------------------------------------------------------------
-        //--------------------------------------------------------------------------------------------------
-
         this.add(baseFija);
-        this.add(this.cola); 
+        this.add(this.cola);
         this.add(boca);
         this.add(piernas);
 
-        //--------------------------------------------------------------------------------------------------
         // Animaciones
-        //--------------------------------------------------------------------------------------------------
-
         this.bocaRotationAnimator = new RotationAnimator();
-        this.tailBaseAnimator = new RotationAnimator(); // Necesitas un animador por cada segmento
+        this.tailBaseAnimator = new RotationAnimator();
         this.tailMidAnimator = new RotationAnimator();
         this.tailTipAnimator = new RotationAnimator();
-        this.piernasRotationAnimator1 = new RotationAnimator(); // Animador para pierna1
-        this.piernasRotationAnimator2 = new RotationAnimator(); // Animador para pierna2
-        this.piernasRotationAnimator3 = new RotationAnimator(); // Animador para pierna3
-        this.piernasRotationAnimator4 = new RotationAnimator(); // Animador para pierna4
+        this.piernasRotationAnimator1 = new RotationAnimator();
+        this.piernasRotationAnimator2 = new RotationAnimator();
+        this.piernasRotationAnimator3 = new RotationAnimator();
+        this.piernasRotationAnimator4 = new RotationAnimator();
         this.updatePiernasRotation(0);
     }
 
     createGUI(gui, titleGui) {
         this.guiControls = {
-            rotacionCola: 0, // Valor inicial para el control GUI
+            rotacionCola: 0,
             aperturaBoca: 0,
             movimientoPiernas: 0
         };
 
-        // Se crea una sección para los controles
         var folder = gui.addFolder(titleGui);
 
-        // Corregido: El nombre de la propiedad en this.guiControls debe coincidir ('rotacionCola')
-        folder.add(this.guiControls, 'rotacionCola', -Math.PI / 4, Math.PI / 4, 0.001) // Rango de rotación en radianes
-            .name('Cola Y : ') // Nombre que se muestra en la GUI
-            .onChange((value) => this.updateTailRotation(value)); // Llama a la función para actualizar la rotación
+        folder.add(this.guiControls, 'rotacionCola', -Math.PI / 4, Math.PI / 4, 0.001)
+            .name('Cola Y : ')
+            .onChange((value) => this.updateTailRotation(value));
 
-        folder.add(this.guiControls, 'aperturaBoca', -Math.PI / 4, Math.PI / 50, 0.001) // Rango de rotación en radianes
-            .name('Boca X : ') // Nombre que se muestra en la GUI
+        folder.add(this.guiControls, 'aperturaBoca', -Math.PI / 4, Math.PI / 50, 0.001)
+            .name('Boca X : ')
             .onChange((value) => this.updateBocaRotation(value));
 
-        folder.add(this.guiControls, 'movimientoPiernas', -Math.PI / 4, Math.PI / 4, 0.001) // Rango de rotación en radianes
-            .name('Piernas X : ') // Nombre que se muestra en la GUI
+        folder.add(this.guiControls, 'movimientoPiernas', -Math.PI / 4, Math.PI / 4, 0.001)
+            .name('Piernas X : ')
             .onChange((value) => this.updatePiernasRotation(value));
     }
 
     createPiernas(){
-
         var cadera_geom = new THREE.SphereGeometry(0.006);
         var rodilla_geom = new THREE.SphereGeometry(0.006);
         var muslo_geom = new THREE.CylinderGeometry(0.006, 0.006, 0.02);
@@ -179,7 +151,6 @@ class Torre extends THREE.Object3D {
         muslo_geom.rotateX(-Math.PI/10);
         muslo_geom.translate(0, 0, 0);
         pie_geom.translate(0, -0.023, 0.01);
-        //desp X = 0.022
 
         var pierna1 = new THREE.Object3D();
         var pierna2 = new THREE.Object3D();
@@ -241,9 +212,9 @@ class Torre extends THREE.Object3D {
         var bocaGeom = new THREE.ExtrudeGeometry ( shape , options );
         bocaGeom.rotateX(-Math.PI/2);
         bocaGeom.translate(0, 0.026, 0);
-        bocaGeom.computeVertexNormals(); // Esencial para la iluminación y bump maps
-        bocaGeom.computeBoundingBox(); // Necesario para algunas operaciones de UV y si usas Box3
-        var bocaMesh = new THREE.Mesh(bocaGeom, this.MaterialVerde); //Cubo superior
+        bocaGeom.computeVertexNormals();
+        bocaGeom.computeBoundingBox();
+        var bocaMesh = new THREE.Mesh(bocaGeom, this.MaterialVerde);
 
         var geom_apoyo_1 = new THREE.BoxGeometry(0.003, 0.012, 0.01);
         var geom_apoyo_2 = new THREE.BoxGeometry(0.003, 0.012, 0.01);
@@ -251,7 +222,6 @@ class Torre extends THREE.Object3D {
         var geom_cil_2 = new THREE.CylinderGeometry(0.005, 0.005, 0.003);
         var geom_eje = new THREE.CylinderGeometry(0.003, 0.003, 0.04);
 
-        //Transformaciones
         geom_apoyo_1.translate(0.015, -0.019, 0);
         geom_apoyo_2.translate(-0.015, -0.019, 0);
         geom_apoyo_1.rotateX(Math.PI);
@@ -275,16 +245,12 @@ class Torre extends THREE.Object3D {
         var cil2_brush = new CSG.Brush(geom_cil_2, this.metalMaterial);
         var eje_brush = new CSG.Brush(geom_eje, this.metalMaterial);
 
-        //Operaciones
         var evaluador = new CSG.Evaluator();
         var baseApoyo = evaluador.evaluate(apoyo1_brush, apoyo2_brush, CSG.ADDITION);
         var cilApoyo = evaluador.evaluate(cil1_brush, cil2_brush, CSG.ADDITION);
         var apoyoSin = evaluador.evaluate(baseApoyo, cilApoyo, CSG.ADDITION);
-        var apoyoFinal = evaluador.evaluate(apoyoSin, eje_brush, CSG.SUBTRACTION); //Eje de apoyo
+        var apoyoFinal = evaluador.evaluate(apoyoSin, eje_brush, CSG.SUBTRACTION);
 
-        //////////////////////////
-        // Dientes
-        //////////////////////////
         const grupoDientes1 = new THREE.Group();
         for (let j = 0; j < 10; j++) {
             const geometry = new THREE.CylinderGeometry(0.0045, 0, 0.008);
@@ -375,108 +341,67 @@ class Torre extends THREE.Object3D {
     }
 
     createPuntaCola() {
-        // Geometrías para la punta (cono) y su eje (esfera)
-        var puntaGeo = new THREE.CylinderGeometry(0, 0.0075, 0.0167, 16); // Cono
-        var ejePuntaGeo = new THREE.SphereGeometry(0.0074); // Esfera para el "eje" visual
+        var puntaGeo = new THREE.CylinderGeometry(0, 0.0075, 0.0167, 16);
+        var ejePuntaGeo = new THREE.SphereGeometry(0.0074);
 
-        // Transformaciones: Mover el origen de la geometría del cono para que la base esté en (0,0,0)
-        // y luego rotarla para que apunte a lo largo del eje Z positivo
         puntaGeo.translate(0, (0.0167 / 2)+0.003, 0);
         puntaGeo.rotateX(-Math.PI / 2);
 
-        // Crear los Mesh (combinación de geometría y material)
         var puntaMesh = new THREE.Mesh(puntaGeo, this.material_escamas);
         var ejeMesh = new THREE.Mesh(ejePuntaGeo, this.material_escamas);
 
-        // Crear un Object3D que servirá como el nodo de transformación para este segmento (la punta)
         var segmento = new THREE.Object3D();
-        // No aplicamos la rotación inicial aquí, se controlará dinámicamente
-
-        // Corregido: Añadir los Mesh (no las geometrías) al Object3D del segmento
         segmento.add(puntaMesh);
         segmento.add(ejeMesh);
 
-        // Almacenar la referencia a este Object3D para poder rotarlo después
         this.segmentoPunta = segmento;
-
         return segmento;
     }
 
     createMitadCola() {
-        // Crear el segmento hijo (la punta)
-        // createPuntaCola ya almacena la referencia en this.segmentoPunta
         var punta = this.createPuntaCola();
-
-        // Posicionar el segmento hijo (la punta) relativo a este segmento padre (la mitad)
-        // La punta se coloca en el "extremo" de este segmento base
-        // Como los cilindros/conos se orientaron a lo largo de Z, el extremo está en (0, 0, 1.67)
         punta.position.set(0, 0, -0.0167);
 
-        // Geometrías para la mitad de la cola (cilindro) y su eje (esfera)
         var mitadGeo = new THREE.CylinderGeometry(0.0075, 0.015, 0.0167, 16);
         var ejeMitadGeo = new THREE.SphereGeometry(0.014);
 
-        // Transformaciones a la geometría
         mitadGeo.translate(0, (0.0167 / 2)+0.003, 0);
         mitadGeo.rotateX(-Math.PI / 2);
 
-        // Crear los Mesh
         var mitadMesh = new THREE.Mesh(mitadGeo, this.material_escamas);
         var ejeMesh = new THREE.Mesh(ejeMitadGeo, this.material_escamas);
 
-        // Crear un Object3D que servirá como el nodo de transformación para este segmento (la mitad)
         var segmento = new THREE.Object3D();
-        // No aplicamos la rotación inicial aquí
-
-        // Corregido: Añadir los Mesh de este segmento Y el Object3D del segmento hijo
         segmento.add(mitadMesh);
         segmento.add(ejeMesh);
-        segmento.add(punta); // Añadir el Object3D retornado por createPuntaCola (que ahora es this.segmentoPunta)
+        segmento.add(punta);
 
-        // Almacenar la referencia a este Object3D
         this.segmentoMitad = segmento;
-
         return segmento;
     }
 
     createCola() {
-        // Crear el segmento hijo (la mitad), que a su vez crea la punta
-        // createMitadCola ya almacena las referencias en this.segmentoMitad y this.segmentoPunta
         var mitad = this.createMitadCola();
-
-        // Posicionar el segmento hijo (la mitad) relativo a este segmento padre (la base)
-        // La mitad se coloca en el "extremo" de este segmento base
         mitad.position.set(0, 0, -0.0167);
 
-        // Geometrías para la base de la cola (cilindro más grueso) y su eje (esfera)
         var baseGeo = new THREE.CylinderGeometry(0.015, 0.0225, 0.0167, 16);
         var ejeBaseGeo = new THREE.SphereGeometry(0.02);
 
-        // Transformaciones a la geometría
         baseGeo.translate(0, (0.0167 / 2)+0.003, 0);
         baseGeo.rotateX(-Math.PI / 2);
 
-        // Crear los Mesh
         var baseMesh = new THREE.Mesh(baseGeo, this.material_escamas);
         var ejeMesh = new THREE.Mesh(ejeBaseGeo, this.material_escamas);
 
-        // Crear un Object3D que servirá como el nodo de transformación para este segmento (la base)
         var segmento = new THREE.Object3D();
-        // No aplicamos la rotación inicial aquí
-
-        // Corregido: Añadir los Mesh de este segmento Y el Object3D del segmento hijo
         segmento.add(baseMesh);
         segmento.add(ejeMesh);
-        segmento.add(mitad); // Añadir el Object3D retornado por createMitadCola (que ahora es this.segmentoMitad)
+        segmento.add(mitad);
 
-        // Almacenar la referencia a este Object3D
         this.segmentoBase = segmento;
-
-        // Retornar el Object3D raíz de la jerarquía de la cola
         return segmento;
     }
 
-    // Corregido: Nuevo nombre para la función que actualiza la rotación y uso de las referencias almacenadas
     updateTailRotation(valor) {
         const targetBase = new THREE.Euler(0, valor / 4, 0);
         const targetMid = new THREE.Euler(0, valor / 2, 0);
@@ -502,31 +427,25 @@ class Torre extends THREE.Object3D {
                 targetTip,
                 500
             );
-        }
-    }
+        }
+    }
 
-    /*updateBocaRotation(valor) {
-        this.boca.rotation.x = valor;
-        this.boca.position.set(0, 0.013, -0.035);
-    }*/
-   updateBocaRotation(valor) {
+    updateBocaRotation(valor) {
         const targetBocaRotation = new THREE.Euler(valor, 0, 0);
         this.bocaRotationAnimator.setAndStart(
             this.boca.rotation,
             targetBocaRotation,
-            300 // Adjust duration as needed
+            300
         );
     }
 
-     updatePiernasRotation(valor) {
-        // Las posiciones de las piernas se establecen una vez y se mantienen.
-        // Solo animaremos la rotación.
+    updatePiernasRotation(valor) {
         this.pierna1.position.set(0.022, 0, 0.04);
         this.pierna2.position.set(0.022, 0, -0.04);
         this.pierna3.position.set(-0.022, 0, -0.04);
         this.pierna4.position.set(-0.022, 0, 0.04);
 
-        const duration = 300; // Duración de la animación en milisegundos
+        const duration = 300;
 
         if (this.pierna1) {
             const targetRotation1 = new THREE.Euler(valor, 0, 0);
@@ -545,7 +464,7 @@ class Torre extends THREE.Object3D {
             );
         }
         if (this.pierna3) {
-            const targetRotation3 = new THREE.Euler(-valor, 0, 0); // Rotación opuesta
+            const targetRotation3 = new THREE.Euler(-valor, 0, 0);
             this.piernasRotationAnimator3.setAndStart(
                 this.pierna3.rotation,
                 targetRotation3,
@@ -553,13 +472,124 @@ class Torre extends THREE.Object3D {
             );
         }
         if (this.pierna4) {
-            const targetRotation4 = new THREE.Euler(-valor, 0, 0); // Rotación opuesta
+            const targetRotation4 = new THREE.Euler(-valor, 0, 0);
             this.piernasRotationAnimator4.setAndStart(
                 this.pierna4.rotation,
                 targetRotation4,
                 duration
             );
         }
+    }
+
+    // --- Nuevas funciones de animación compuestas ---
+
+    /**
+     * Activa una animación de "caminar" para la torre,
+     * animando las piernas y la cola de manera coordinada.
+     */
+    startWalkingAnimation() {
+        const walkingDuration = 800; // Duración de un ciclo de paso
+        const legMovementAmplitude = Math.PI / 8; // Amplitud del movimiento de las piernas
+        const tailMovementAmplitude = Math.PI / 8; // Amplitud del movimiento de la cola
+
+        // Animación de piernas (ida y vuelta para simular un paso)
+        const walkForward = () => {
+            this.updatePiernasRotation(legMovementAmplitude);
+            new TWEEN.Tween(this.guiControls)
+                .to({ movimientoPiernas: -legMovementAmplitude }, walkingDuration / 2)
+                .easing(TWEEN.Easing.Sinusoidal.InOut)
+                .onComplete(() => {
+                    this.updatePiernasRotation(-legMovementAmplitude);
+                    new TWEEN.Tween(this.guiControls)
+                        .to({ movimientoPiernas: legMovementAmplitude }, walkingDuration / 2)
+                        .easing(TWEEN.Easing.Sinusoidal.InOut)
+                        .onComplete(walkForward) // Repetir el ciclo
+                        .start();
+                })
+                .start();
+        };
+
+        // Animación de la cola (balanceo lateral)
+        const tailSwing = () => {
+            this.updateTailRotation(tailMovementAmplitude);
+            new TWEEN.Tween(this.guiControls)
+                .to({ rotacionCola: -tailMovementAmplitude }, walkingDuration / 2)
+                .easing(TWEEN.Easing.Sinusoidal.InOut)
+                .onComplete(() => {
+                    this.updateTailRotation(-tailMovementAmplitude);
+                    new TWEEN.Tween(this.guiControls)
+                        .to({ rotacionCola: tailMovementAmplitude }, walkingDuration / 2)
+                        .easing(TWEEN.Easing.Sinusoidal.InOut)
+                        .onComplete(tailSwing) // Repetir el ciclo
+                        .start();
+                })
+                .start();
+        };
+
+        // Iniciar ambas animaciones
+        walkForward();
+        tailSwing();
+    }
+
+    /**
+     * Activa una animación de "lucha" para la torre,
+     * moviendo la boca y la cola de manera agresiva.
+     */
+    startFightingAnimation() {
+        const fightDuration = 400; // Duración de un movimiento de lucha
+        const mouthOpenAngle = Math.PI / 5; // Ángulo máximo de apertura de la boca
+        const mouthCloseAngle = Math.PI / 50; // Ángulo mínimo de cierre (el valor actual que tienes)
+        const tailWhipAmplitude = Math.PI / 3; // Amplitud del latigazo de la cola
+
+        // Animación de la boca (abrir y cerrar repetidamente)
+        const mouthAttack = () => {
+            this.updateBocaRotation(mouthOpenAngle); // Abre la boca
+            new TWEEN.Tween(this.guiControls)
+                .to({ aperturaBoca: mouthCloseAngle }, fightDuration / 2)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .onComplete(() => {
+                    this.updateBocaRotation(mouthCloseAngle); // Cierra la boca
+                    new TWEEN.Tween(this.guiControls)
+                        .to({ aperturaBoca: mouthOpenAngle }, fightDuration / 2)
+                        .easing(TWEEN.Easing.Quadratic.In)
+                        .onComplete(mouthAttack) // Repetir
+                        .start();
+                })
+                .start();
+        };
+
+        // Animación de la cola (latigazo)
+        const tailWhip = () => {
+            this.updateTailRotation(tailWhipAmplitude); // Latigazo hacia un lado
+            new TWEEN.Tween(this.guiControls)
+                .to({ rotacionCola: -tailWhipAmplitude }, fightDuration / 2)
+                .easing(TWEEN.Easing.Sinusoidal.InOut)
+                .onComplete(() => {
+                    this.updateTailRotation(-tailWhipAmplitude); // Latigazo hacia el otro lado
+                    new TWEEN.Tween(this.guiControls)
+                        .to({ rotacionCola: tailWhipAmplitude }, fightDuration / 2)
+                        .easing(TWEEN.Easing.Sinusoidal.InOut)
+                        .onComplete(tailWhip) // Repetir
+                        .start();
+                })
+                .start();
+        };
+
+        // Iniciar ambas animaciones
+        mouthAttack();
+        tailWhip();
+    }
+
+    /**
+     * Detiene todas las animaciones iniciadas por `startWalkingAnimation` o `startFightingAnimation`.
+     * Esto es importante para que las animaciones no sigan ejecutándose indefinidamente.
+     */
+    stopAllAnimations() {
+        TWEEN.removeAll(); // Detiene todos los tweens activos
+        // Puedes opcionalmente reiniciar los valores a su posición original si lo deseas
+        this.updatePiernasRotation(0);
+        this.updateBocaRotation(0);
+        this.updateTailRotation(0);
     }
 
     update() {
