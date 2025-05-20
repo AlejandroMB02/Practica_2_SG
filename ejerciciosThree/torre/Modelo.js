@@ -1,7 +1,7 @@
 import * as THREE from '../libs/three.module.js'
 import * as TWEEN from '../libs/tween.module.js'
 import * as CSG from '../libs/three-bvh-csg.js'
-import { CombatAnimator } from './Animator.js'
+import { RotationAnimator } from './Animator.js'
 
 class Torre extends THREE.Object3D {
     constructor(gui,titleGui) {
@@ -103,7 +103,10 @@ class Torre extends THREE.Object3D {
         // Animaciones
         //--------------------------------------------------------------------------------------------------
 
-        this.anim = new CombatAnimator ();
+        this.bocaRotationAnimator = new RotationAnimator();
+        this.tailBaseAnimator = new RotationAnimator();
+        this.tailMidAnimator = new RotationAnimator();
+        this.tailTipAnimator = new RotationAnimator();
     }
 
     createGUI(gui, titleGui) {
@@ -441,7 +444,7 @@ class Torre extends THREE.Object3D {
     }
 
     // Corregido: Nuevo nombre para la función que actualiza la rotación y uso de las referencias almacenadas
-    updateTailRotation(valor) {
+    /*updateTailRotation(valor) {
         // Aplicar rotación a los segmentos si existen
         // Aplicamos las rotaciones con diferentes factores para simular una curva
         // Originalmente la base tenía /4, la mitad /2 y la punta /1
@@ -454,11 +457,52 @@ class Torre extends THREE.Object3D {
          if (this.segmentoPunta) {
              this.segmentoPunta.rotation.y = valor;
         }
+    }*/
+   updateTailRotation(valor) {
+        // This function will now *trigger* the animation, not directly set the rotation.
+        // We need to define the target rotation for the segment.
+        // The `valor` from the GUI will be our target.
+
+        // Define the target Euler angles for each segment
+        const targetBaseRotation = new THREE.Euler(0, valor / 4, 0);
+        const targetMitadRotation = new THREE.Euler(0, valor / 2, 0);
+        const targetPuntaRotation = new THREE.Euler(0, valor, 0);
+
+        // Animate each segment's rotation
+        if (this.segmentoBase) {
+            this.tailRotationAnimator.setAndStart(
+                this.segmentoBase.rotation,
+                targetBaseRotation,
+                500 // Animation duration in milliseconds
+            );
+        }
+        if (this.segmentoMitad) {
+            this.tailRotationAnimator.setAndStart(
+                this.segmentoMitad.rotation,
+                targetMitadRotation,
+                500
+            );
+        }
+        if (this.segmentoPunta) {
+            this.tailRotationAnimator.setAndStart(
+                this.segmentoPunta.rotation,
+                targetPuntaRotation,
+                500
+            );
+        }
     }
 
-    updateBocaRotation(valor) {
+    /*updateBocaRotation(valor) {
         this.boca.rotation.x = valor;
         this.boca.position.set(0, 0.013, -0.035);
+    }*/
+   updateBocaRotation(valor) {
+        const targetBocaRotation = new THREE.Euler(valor, 0, 0);
+        this.bocaRotationAnimator.setAndStart(
+            this.boca.rotation,
+            targetBocaRotation,
+            300 // Adjust duration as needed
+        );
     }
 
     updatePiernasRotation(valor) {
