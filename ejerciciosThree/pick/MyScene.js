@@ -9,262 +9,270 @@ class MyScene extends THREE.Scene {
     super();
 
     // Estado de captura y turnos
-    this.capturedWhite = []
-    this.capturedBlack = []
-    this.currentTurnTeam = 'white'  // empieza el turno de las blancas
+    this.capturedWhite = [];
+    this.capturedBlack = [];
+    this.currentTurnTeam = 'white'; // empieza el turno de las blancas
 
-    this.renderer = this.createRenderer(myCanvas)
-    this.gui = this.createGUI()
-    this.createLights()
-    this.createCamera()
+    // Parámetros de la animación de introducción
+    this.inIntro = true;
+    this.introAngle = 0;
+    this.introRadius = 3;    // distancia inicial panorámica
+    this.introHeight = 2;    // altura de la cámara en la introducción
 
-    this.axis = new THREE.AxesHelper(0.1)
-    this.add(this.axis)
+    this.renderer = this.createRenderer(myCanvas);
+    this.gui = this.createGUI();
+    this.createLights();
+    this.createCamera();
+
+    // Desactivar control de cámara al inicio y en modo por turnos
+    this.cameraControl.noRotate = true;
+    this.cameraControl.noPan = true;
+    this.cameraControl.noZoom = true;
+
+    this.axis = new THREE.AxesHelper(0.1);
+    this.add(this.axis);
 
     // Tablero y piezas
-    this.model = new Tablero()
-    this.add(this.model)
+    this.model = new Tablero();
+    this.add(this.model);
     this.piezas = this.model.pieces;
 
-    this.raycaster = new THREE.Raycaster()
-    this.mouse = new THREE.Vector2()
-    this.piezaSeleccionada = null
+    this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2();
+    this.piezaSeleccionada = null;
 
-    const canvas = this.renderer.domElement
-    // Listeners en fase captura para bloquear inercias
-    canvas.addEventListener('pointerdown', this.onPointerDown.bind(this), true)
+    const canvas = this.renderer.domElement;
+    // Siempre desactivar controles según noRotate/noPan/noZoom
+    canvas.addEventListener('pointerdown', this.onPointerDown.bind(this), true);
     canvas.addEventListener('pointermove', ev => {
       if (this.piezaSeleccionada) {
-        ev.stopPropagation()
-        ev.preventDefault()
+        ev.stopPropagation(); ev.preventDefault();
       }
-    }, true)
+    }, true);
     canvas.addEventListener('pointerup', ev => {
       if (this.piezaSeleccionada) {
-        ev.stopPropagation()
-        ev.preventDefault()
+        ev.stopPropagation(); ev.preventDefault();
       }
-    }, true)
+    }, true);
   }
-onPointerDown(event) {
-  // 1) Coordenadas normalizadas del puntero
-  const rect = this.renderer.domElement.getBoundingClientRect();
-  this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-  this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-  this.raycaster.setFromCamera(this.mouse, this.camera);
 
-  // 2) Si no hay pieza seleccionada: intento seleccionar
-  if (!this.piezaSeleccionada) {
-    const hits = this.raycaster.intersectObjects(this.piezas,false);
-    if (hits.length > 0) {
-      const pieza = hits[0].object;
-      if (pieza.team === this.currentTurnTeam) {
-        event.stopPropagation();
-        event.preventDefault();
-        this.piezaSeleccionada = pieza;
-        this.cameraControl.noRotate = true;
-        this.cameraControl.noPan    = true;
+  onPointerDown(event) {
+    // Primer clic: salir de la introducción y pasar a modo turnos fijo
+    if (this.inIntro) {
+      this.inIntro = false;
+      // Mantener controles desactivados
+      this.updateCameraPosition();
+      return;
+    }
 
-        // animar elevación al seleccionarla
-        new TWEEN.Tween(pieza.position)
+    // Código existente de selección y movimiento (idéntico)
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+
+    if (!this.piezaSeleccionada) {
+      const hits = this.raycaster.intersectObjects(this.piezas, false);
+      if (hits.length > 0) {
+        const pieza = hits[0].object;
+        if (pieza.team === this.currentTurnTeam) {
+          event.stopPropagation(); event.preventDefault();
+          this.piezaSeleccionada = pieza;
+
+          new TWEEN.Tween(pieza.position)
+            .to({ y: 0.12 }, 300)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .start();
+          setTimeout(() => this.model.resaltarCasillasLegales(pieza), 200);
+        }
+      }
+      return;
+    }
+
+    const piezaHits = this.raycaster.intersectObjects(this.piezas, false);
+    if (piezaHits.length > 0) {
+      const otra = piezaHits[0].object;
+      if (otra.team === this.currentTurnTeam && otra !== this.piezaSeleccionada) {
+        event.stopPropagation(); event.preventDefault();
+        new TWEEN.Tween(this.piezaSeleccionada.position)
+          .to({ y: 0.01 }, 200)
+          .easing(TWEEN.Easing.Quadratic.In)
+          .start();
+        this.model.limpiarResaltado();
+        this.piezaSeleccionada = otra;
+        new TWEEN.Tween(otra.position)
           .to({ y: 0.12 }, 300)
           .easing(TWEEN.Easing.Quadratic.Out)
           .start();
-
-        // resaltar movimientos tras un pequeño delay
-        setTimeout(() => this.model.resaltarCasillasLegales(pieza), 200);
+        setTimeout(() => this.model.resaltarCasillasLegales(otra), 200);
+        return;
       }
     }
-    return;
-  }
 
-  // 3) Si ya había selección, permito cambiar a otra de mi equipo
-  const piezaHits = this.raycaster.intersectObjects(this.piezas, false);
-  if (piezaHits.length > 0) {
-    const otra = piezaHits[0].object;
-    if (otra.team === this.currentTurnTeam && otra !== this.piezaSeleccionada) {
-      event.stopPropagation();
-      event.preventDefault();
-      // bajar la anterior
+    const sqHits = this.raycaster.intersectObjects(this.model.squares);
+    if (sqHits.length > 0) {
+      const casilla = sqHits[0].object;
+      if (casilla.userData.resaltada) {
+        event.stopPropagation(); event.preventDefault();
+        const destF = casilla.userData.fila;
+        const destC = casilla.userData.columna;
+        const pieza = this.piezaSeleccionada;
+        const target = this.model.getPiece(destF, destC);
+
+        if (target && target.team !== this.currentTurnTeam) {
+          const perRow = 4, spacing = 0.06, rowSpacing = 0.15;
+          const idx = (target.team === 'white' ? this.capturedWhite : this.capturedBlack).length;
+          const baseX = target.team === 'white' ? -0.15 : 1.12;
+          const capX = baseX + Math.floor(idx / perRow) * rowSpacing;
+          const capZ = -0.3 + (idx % perRow) * spacing;
+          if (target.team === 'white') this.capturedWhite.push(target);
+          else this.capturedBlack.push(target);
+          new TWEEN.Tween(target.position)
+            .to({ y: 0.12 }, 200)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .onComplete(() => {
+              new TWEEN.Tween(target.position)
+                .to({ x: capX, y: 0.12, z: capZ }, 400)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onComplete(() => {
+                  new TWEEN.Tween(target.position)
+                    .to({ y: 0.01 }, 200)
+                    .easing(TWEEN.Easing.Quadratic.In)
+                    .start();
+                })
+                .start();
+            })
+            .start();
+          target.userData.captured = true;
+          this.model.pieces = this.model.pieces.filter(p => p !== target);
+          this.piezas = this.piezas.filter(p => p !== target);
+        }
+
+        const destX = casilla.position.x;
+        const destZ = casilla.position.z;
+        new TWEEN.Tween(pieza.position)
+          .to({ x: destX, z: destZ }, 400)
+          .easing(TWEEN.Easing.Quadratic.InOut)
+          .onComplete(() => {
+            new TWEEN.Tween(pieza.position)
+              .to({ y: 0.01 }, 200)
+              .easing(TWEEN.Easing.Quadratic.In)
+              .start();
+            pieza.userData = { fila: destF, columna: destC };
+            this.model.limpiarResaltado();
+            this.piezaSeleccionada = null;
+            this.currentTurnTeam = (this.currentTurnTeam === 'white') ? 'black' : 'white';
+            this.updateCameraPosition();
+          })
+          .start();
+        return;
+      }
+    }
+
+    this.model.limpiarResaltado();
+    if (this.piezaSeleccionada) {
       new TWEEN.Tween(this.piezaSeleccionada.position)
         .to({ y: 0.01 }, 200)
         .easing(TWEEN.Easing.Quadratic.In)
         .start();
-      this.model.limpiarResaltado();
-      this.piezaSeleccionada = otra;
-      // subir la nueva
-      new TWEEN.Tween(otra.position)
-        .to({ y: 0.12 }, 300)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
-      setTimeout(() => this.model.resaltarCasillasLegales(otra), 200);
-      return;
     }
+    this.piezaSeleccionada = null;
   }
-
-  // 4) Intento mover / capturar en casilla resaltada
-  const sqHits = this.raycaster.intersectObjects(this.model.squares);
-  if (sqHits.length > 0) {
-    const casilla = sqHits[0].object;
-    if (casilla.userData.resaltada) {
-      event.stopPropagation();
-      event.preventDefault();
-
-      const destF = casilla.userData.fila;
-      const destC = casilla.userData.columna;
-      const pieza = this.piezaSeleccionada;
-
-      // --- captura con animación ---
-      const target = this.model.getPiece(destF, destC);
-      if (target && target.team !== this.currentTurnTeam) {
-        // parámetros de layout de cementerio
-        const perRow     = 4;
-        const spacing    = 0.06;
-        const rowSpacing = 0.15;
-        const idx        = (target.team === 'white' ? this.capturedWhite : this.capturedBlack).length;
-        const baseX      = target.team === 'white' ? -0.15 : 1.25;
-        const capX       = baseX + Math.floor(idx / perRow) * rowSpacing;
-        const capZ       = -0.3   + (idx % perRow) * spacing;
-
-        // añadir al array correspondiente
-        if (target.team === 'white') this.capturedWhite.push(target);
-        else                        this.capturedBlack.push(target);
-
-        // secuencia de tweens: levantar → deslizar → soltar
-        new TWEEN.Tween(target.position)
-          .to({ y: 0.12 }, 200)
-          .easing(TWEEN.Easing.Quadratic.Out)
-          .onComplete(() => {
-            new TWEEN.Tween(target.position)
-              .to({ x: capX, y: 0.12, z: capZ }, 400)
-              .easing(TWEEN.Easing.Quadratic.InOut)
-              .onComplete(() => {
-                new TWEEN.Tween(target.position)
-                  .to({ y: 0.01 }, 200)
-                  .easing(TWEEN.Easing.Quadratic.In)
-                  .start();
-              })
-              .start();
-          })
-          .start();
-
-        target.userData.captured = true;
-        this.model.pieces = this.model.pieces.filter(p => p !== target);
-        this.piezas       = this.piezas.filter(p => p !== target);
-      }
-
-      // --- mover la pieza seleccionada con tween ---
-      const destX = casilla.position.x;
-      const destZ = casilla.position.z;
-
-      new TWEEN.Tween(pieza.position)
-        .to({ x: destX, z: destZ }, 400)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .onComplete(() => {
-          // bajar tras el desliz
-          new TWEEN.Tween(pieza.position)
-            .to({ y: 0.01 }, 200)
-            .easing(TWEEN.Easing.Quadratic.In)
-            .start();
-          // actualizar estado interno
-          pieza.userData = { fila: destF, columna: destC };
-          this.model.limpiarResaltado();
-          this.piezaSeleccionada = null;
-          this.cameraControl.noRotate = false;
-          this.cameraControl.noPan    = false;
-          // cambiar turno
-          this.currentTurnTeam = (this.currentTurnTeam === 'white') ? 'black' : 'white';
-        })
-        .start();
-
-      return;
-    }
-  }
-
-  // 5) Clic fuera: cancelar selección y bajar si estaba elevada
-  this.model.limpiarResaltado();
-  if (this.piezaSeleccionada) {
-    new TWEEN.Tween(this.piezaSeleccionada.position)
-      .to({ y: 0.04 }, 200)
-      .easing(TWEEN.Easing.Quadratic.In)
-      .start();
-  }
-  this.piezaSeleccionada = null;
-  this.cameraControl.noRotate = false;
-  this.cameraControl.noPan    = false;
-}
-
-
 
   createCamera() {
-    this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10)
-    this.camera.position.set(0.2, 0.05, 0.2)
-    const look = new THREE.Vector3(0, 0, 0)
-    this.camera.lookAt(look)
-    this.add(this.camera)
-    this.cameraControl = new TrackballControls(this.camera, this.renderer.domElement)
-    this.cameraControl.rotateSpeed = 5
-    this.cameraControl.zoomSpeed = -2
-    this.cameraControl.panSpeed = 0.5
-    this.cameraControl.target = look
+    this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10);
+    // Posición inicial: panorámica o por turno
+    const initDistance = this.inIntro ? this.introRadius : 1.6;
+    const initY = this.inIntro ? this.introHeight : 1.5;
+    const z = this.currentTurnTeam === 'white' ? -initDistance : initDistance;
+    const look = new THREE.Vector3(0, 0, 0);
+
+    this.camera.position.set(0, initY, z);
+    this.camera.lookAt(look);
+    this.add(this.camera);
+
+    this.cameraControl = new TrackballControls(this.camera, this.renderer.domElement);
+    this.cameraControl.rotateSpeed = 5;
+    this.cameraControl.zoomSpeed = -2;
+    this.cameraControl.panSpeed = 0.5;
+    this.cameraControl.target = look;
+  }
+
+  // Ajusta la cámara según el equipo activo
+  updateCameraPosition() {
+    const center = new THREE.Vector3(0, 0, 0);
+    const distance = 1.6;
+    const y = 1.5;
+    const z = this.currentTurnTeam === 'white' ? -distance : distance;
+    new TWEEN.Tween(this.camera.position)
+      .to({ x: 0, y: y, z: z }, 500)
+      .easing(TWEEN.Easing.Quadratic.InOut)
+      .onUpdate(() => {
+        this.camera.lookAt(center);
+        this.cameraControl.target.copy(center);
+      })
+      .start();
   }
 
   createGUI() {
-    const gui = new GUI()
-    this.guiControls = {
-      lightPower: 50.0,
-      ambientIntensity: 0.5,
-      axisOnOff: true
-    }
-    const folder = gui.addFolder('Luz y Ejes')
+    const gui = new GUI();
+    this.guiControls = { lightPower: 50.0, ambientIntensity: 0.5, axisOnOff: true };
+    const folder = gui.addFolder('Luz y Ejes');
     folder.add(this.guiControls, 'lightPower', 0, 1000, 20)
-      .name('Luz puntual')
-      .onChange(value => this.setLightPower(value))
+      .name('Luz puntual').onChange(v => this.setLightPower(v));
     folder.add(this.guiControls, 'ambientIntensity', 0, 1, 0.05)
-      .name('Luz ambiental')
-      .onChange(value => this.setAmbientIntensity(value))
+      .name('Luz ambiental').onChange(v => this.setAmbientIntensity(v));
     folder.add(this.guiControls, 'axisOnOff')
-      .name('Mostrar ejes')
-      .onChange(value => this.setAxisVisible(value))
-    return gui
+      .name('Mostrar ejes').onChange(v => this.setAxisVisible(v));
+    return gui;
   }
 
   createLights() {
-    this.ambientLight = new THREE.AmbientLight('white', this.guiControls.ambientIntensity)
-    this.add(this.ambientLight)
-    this.pointLight = new THREE.SpotLight(0xffffff)
-    this.pointLight.power = this.guiControls.lightPower
-    this.pointLight.position.set(2, 3, 1)
-    this.add(this.pointLight)
+    this.ambientLight = new THREE.AmbientLight('white', this.guiControls.ambientIntensity);
+    this.add(this.ambientLight);
+    this.pointLight = new THREE.SpotLight(0xffffff);
+    this.pointLight.power = this.guiControls.lightPower;
+    this.pointLight.position.set(2, 3, 1);
+    this.add(this.pointLight);
   }
 
-  setLightPower(v) { this.pointLight.power = v }
-  setAmbientIntensity(v) { this.ambientLight.intensity = v }
-  setAxisVisible(v) { this.axis.visible = v }
+  setLightPower(v) { this.pointLight.power = v; }
+  setAmbientIntensity(v) { this.ambientLight.intensity = v; }
+  setAxisVisible(v) { this.axis.visible = v; }
 
   createRenderer(myCanvas) {
-    const renderer = new THREE.WebGLRenderer()
-    renderer.setClearColor(new THREE.Color(0xEEEEEE), 1.0)
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    $(myCanvas).append(renderer.domElement)
-    return renderer
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setClearColor(new THREE.Color(0xEEEEEE), 1.0);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    $(myCanvas).append(renderer.domElement);
+    return renderer;
   }
 
-  getCamera() { return this.camera }
-  setCameraAspect(r) { this.camera.aspect = r; this.camera.updateProjectionMatrix() }
-  onWindowResize() { this.setCameraAspect(window.innerWidth / window.innerHeight); this.renderer.setSize(window.innerWidth, window.innerHeight) }
+  getCamera() { return this.camera; }
+  setCameraAspect(r) { this.camera.aspect = r; this.camera.updateProjectionMatrix(); }
+  onWindowResize() {
+    this.setCameraAspect(window.innerWidth / window.innerHeight);
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
 
   update() {
-    this.renderer.render(this, this.getCamera())
-    TWEEN.update()
-    this.cameraControl.update()
-    this.model.update()
-    requestAnimationFrame(() => this.update())
+    this.renderer.render(this, this.getCamera());
+    TWEEN.update();
+    if (this.inIntro) {
+      this.introAngle += 0.005;
+      const x = Math.sin(this.introAngle) * this.introRadius;
+      const z = Math.cos(this.introAngle) * this.introRadius;
+      this.camera.position.set(x, this.introHeight, z);
+      this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+    }
+    // En modo por turnos, no se llama a cameraControl.update(), manteniendo cámara fija
+    this.model.update();
+    requestAnimationFrame(() => this.update());
   }
 }
 
 $(function () {
-  const scene = new MyScene("#WebGL-output")
-  window.addEventListener("resize", () => scene.onWindowResize())
-  scene.update()
-})
+  const scene = new MyScene('#WebGL-output');
+  window.addEventListener('resize', () => scene.onWindowResize());
+  scene.update();
+});
