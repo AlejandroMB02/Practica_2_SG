@@ -173,11 +173,11 @@ class MyScene extends THREE.Scene {
                         this.bocaSpeed = 0.5;}
                     else this.capturedBlack.push(target);
                     new TWEEN.Tween(target.position)
-                        .to({ y: 0.12 }, 300)
+                        .to({ y: 0.12 }, 600)
                         .easing(TWEEN.Easing.Quadratic.Out)
                         .onComplete(() => {
                             new TWEEN.Tween(target.position)
-                                .to({ x: capX, y: 0.12, z: capZ }, 300)
+                                .to({ x: capX, y: 0.12, z: capZ }, 600)
                                 .easing(TWEEN.Easing.Quadratic.InOut)
                                 .onComplete(() => {
                                     new TWEEN.Tween(target.position)
@@ -200,7 +200,7 @@ class MyScene extends THREE.Scene {
                 const destZ = casilla.position.z;
 
                 new TWEEN.Tween(pieza.position)
-                    .to({ x: destX, z: destZ }, 300)
+                    .to({ x: destX, z: destZ }, 1200)
                     .easing(TWEEN.Easing.Quadratic.InOut)
                     .onComplete(() => {
                         new TWEEN.Tween(pieza.position)
@@ -261,6 +261,7 @@ class MyScene extends THREE.Scene {
         const y = 1.5;
         const z = this.currentTurnTeam === 'white' ? -distance : distance;
         this.walkSpeed = 0;
+        this.bocaSpeed = 0;
         new TWEEN.Tween(this.camera.position)
             .to({ x: 0, y: y, z: z }, 500)
             .easing(TWEEN.Easing.Quadratic.InOut)
