@@ -248,6 +248,7 @@ class MyScene extends THREE.Scene {
         const z = this.currentTurnTeam === 'white' ? -distance : distance;
         this.walkSpeed = 0;
         this.bocaSpeed = 0;
+        this.redLight.power = 0;
         new TWEEN.Tween(this.camera.position)
             .to({ x: 0, y: y, z: z }, 500)
             .easing(TWEEN.Easing.Quadratic.InOut)
