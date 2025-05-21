@@ -272,12 +272,19 @@ class MyScene extends THREE.Scene {
 
     createGUI() {
         const gui = new GUI();
-        this.guiControls = { lightPower: 50.0, ambientIntensity: 0.5, axisOnOff: true };
+        this.guiControls = { 
+            lightPower: 20.0, 
+            ambientIntensity: 0.5, 
+            warmLightPower: 100.0, // Control para la nueva luz cálida
+            axisOnOff: true 
+        };
         const folder = gui.addFolder('Luz y Ejes');
         folder.add(this.guiControls, 'lightPower', 0, 1000, 20)
             .name('Luz puntual').onChange(v => this.setLightPower(v));
         folder.add(this.guiControls, 'ambientIntensity', 0, 1, 0.05)
             .name('Luz ambiental').onChange(v => this.setAmbientIntensity(v));
+        folder.add(this.guiControls, 'warmLightPower', 0, 5000, 10) // Nuevo control
+            .name('Luz cálida').onChange(v => this.setWarmLightPower(v));
         folder.add(this.guiControls, 'axisOnOff')
             .name('Mostrar ejes').onChange(v => this.setAxisVisible(v));
         return gui;
@@ -286,14 +293,23 @@ class MyScene extends THREE.Scene {
     createLights() {
         this.ambientLight = new THREE.AmbientLight('white', this.guiControls.ambientIntensity);
         this.add(this.ambientLight);
+
         this.pointLight = new THREE.SpotLight(0xffffff);
         this.pointLight.power = this.guiControls.lightPower;
         this.pointLight.position.set(2, 3, 1);
         this.add(this.pointLight);
+
+        // Nueva luz cálida
+        this.warmLight = new THREE.PointLight(0xFFD700, this.guiControls.warmLightPower); // Color naranja-salmón
+        this.warmLight.position.set(-2, 2.5, -1.5); // Posición para una iluminación diferente
+        this.warmLight.distance = 10; // Distancia de alcance de la luz
+        this.warmLight.decay = 2; // Atenuación de la luz con la distancia
+        this.add(this.warmLight);
     }
 
     setLightPower(v) { this.pointLight.power = v; }
     setAmbientIntensity(v) { this.ambientLight.intensity = v; }
+    setWarmLightPower(v) { this.warmLight.power = v; } // Nuevo setter
     setAxisVisible(v) { this.axis.visible = v; }
 
     createRenderer(myCanvas) {
@@ -325,8 +341,8 @@ class MyScene extends THREE.Scene {
         // En modo por turnos, no se llama a cameraControl.update(), manteniendo cámara fija
         
         // this.model.update(); // El método update en Tablero.js no hace nada actualmente,
-                            // y TWEEN.update() ya se llama globalmente.
-                            // Puedes eliminar esta línea o mantenerla si planeas añadir lógica futura.
+        // y TWEEN.update() ya se llama globalmente.
+        // Puedes eliminar esta línea o mantenerla si planeas añadir lógica futura.
 
         requestAnimationFrame(() => this.update());
     }
