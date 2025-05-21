@@ -193,10 +193,10 @@ class Torre extends THREE.Object3D {
         this.pierna4 = pierna4;
         
         var piernas = new THREE.Object3D();
-        piernas.add(this.pierna1);
-        piernas.add(this.pierna2);
-        piernas.add(this.pierna3);
-        piernas.add(this.pierna4);
+        piernas.add(pierna1);
+        piernas.add(pierna2);
+        piernas.add(pierna3);
+        piernas.add(pierna4);
 
         return piernas;
     }
@@ -337,7 +337,6 @@ class Torre extends THREE.Object3D {
         grupoReturn.add(grupoBoca);
         this.boca = grupoReturn;
 
-        this.updateBocaRotation(0);
         return this.boca;
     }
 
@@ -356,7 +355,7 @@ class Torre extends THREE.Object3D {
         segmento.add(ejeMesh);
 
         this.segmentoPunta = segmento;
-        return this.segmentoPunta;
+        return segmento;
     }
 
     createMitadCola() {
@@ -378,7 +377,7 @@ class Torre extends THREE.Object3D {
         segmento.add(punta);
 
         this.segmentoMitad = segmento;
-        return this.segmentoMitad;
+        return segmento;
     }
 
     createCola() {
@@ -400,21 +399,98 @@ class Torre extends THREE.Object3D {
         segmento.add(mitad);
 
         this.segmentoBase = segmento;
-
-        this.updateTailRotation(0);
-        return this.segmentoBase;
+        return segmento;
     }
 
+    /*
+    updateTailRotation(valor) {
+        const targetBase = new THREE.Euler(0, valor / 4, 0);
+        const targetMid = new THREE.Euler(0, valor / 2, 0);
+        const targetTip = new THREE.Euler(0, valor, 0);
+
+        if (this.segmentoBase) {
+            this.tailBaseAnimator.setAndStart(
+                this.segmentoBase.rotation,
+                targetBase,
+                500
+            );
+        }
+        if (this.segmentoMitad) {
+            this.tailMidAnimator.setAndStart(
+                this.segmentoMitad.rotation,
+                targetMid,
+                500
+            );
+        }
+        if (this.segmentoPunta) {
+            this.tailTipAnimator.setAndStart(
+                this.segmentoPunta.rotation,
+                targetTip,
+                500
+            );
+        }
+    }*/
     updateTailRotation(angle) {
         this.segmentoBase.rotation.y = angle/4; // O el eje que corresponda
         this.segmentoMitad.rotation.y = angle/2;
-        this.segmentoPunta.rotation.y = angle;
+        this.segmentoPuntas.rotation.y = angle;
     }
 
+    /*
+    updateBocaRotation(valor) {
+        const targetBocaRotation = new THREE.Euler(valor, 0, 0);
+        this.bocaRotationAnimator.setAndStart(
+            this.boca.rotation,
+            targetBocaRotation,
+            300
+        );
+    }*/
     updateBocaRotation(angle) {
         this.boca.rotation.x = angle; // O el eje que corresponda
     }
 
+    /*
+    updatePiernasRotation(valor) {
+        this.pierna1.position.set(0.022, 0, 0.04);
+        this.pierna2.position.set(0.022, 0, -0.04);
+        this.pierna3.position.set(-0.022, 0, -0.04);
+        this.pierna4.position.set(-0.022, 0, 0.04);
+
+        const duration = 300;
+
+        if (this.pierna1) {
+            const targetRotation1 = new THREE.Euler(valor, 0, 0);
+            this.piernasRotationAnimator1.setAndStart(
+                this.pierna1.rotation,
+                targetRotation1,
+                duration
+            );
+        }
+        if (this.pierna2) {
+            const targetRotation2 = new THREE.Euler(valor, 0, 0);
+            this.piernasRotationAnimator2.setAndStart(
+                this.pierna2.rotation,
+                targetRotation2,
+                duration
+            );
+        }
+        if (this.pierna3) {
+            const targetRotation3 = new THREE.Euler(-valor, 0, 0);
+            this.piernasRotationAnimator3.setAndStart(
+                this.pierna3.rotation,
+                targetRotation3,
+                duration
+            );
+        }
+        if (this.pierna4) {
+            const targetRotation4 = new THREE.Euler(-valor, 0, 0);
+            this.piernasRotationAnimator4.setAndStart(
+                this.pierna4.rotation,
+                targetRotation4,
+                duration
+            );
+        }
+    }*/
    updatePiernasRotation(angle) {
         this.pierna1.position.set(0.022, 0, 0.04);
         this.pierna2.position.set(0.022, 0, -0.04);
@@ -426,8 +502,162 @@ class Torre extends THREE.Object3D {
         this.pierna4.rotation.x = -angle;
     }
 
-    update() {
-        TWEEN.update();
+    // --- Nuevas funciones de animación compuestas ---
+
+    /**
+     * Inicia la animación de "caminar" para la Torre.
+     */
+    startWalkingAnimation() {
+        if (this.animationsActive) return; // Evitar iniciar si ya está activa
+        this.animationsActive = true;
+
+        const walk = () => {
+            if (!this.animationsActive) return; // Detener si se ha desactivado
+
+            // Animación de piernas
+            this.piernasAnimator.setAndStart(
+                this.piernas.rotation,
+                new THREE.Euler(this.walkAmplitude, 0, 0),
+                this.animationDuration
+            );
+            
+            // Cuando la animación de piernas termine, iniciar el regreso
+            const returnTween = new TWEEN.Tween({}).to({}, this.animationDuration)
+                .onComplete(() => {
+                    if (!this.animationsActive) return;
+                    this.piernasAnimator.setAndStart(
+                        this.piernas.rotation,
+                        new THREE.Euler(-this.walkAmplitude, 0, 0),
+                        this.animationDuration,
+                        new TWEEN.Tween.Promise().then(walk) // encadenar para repetir
+                    );
+                }).start(); // Inicia un tween dummy para esperar el onComplete
+
+            // Animación de boca (abrir y cerrar levemente al caminar)
+            this.bocaAnimator.setAndStart(
+                this.boca.rotation,
+                new THREE.Euler(Math.PI / 16, 0, 0), // Ligeramente abierta
+                this.animationDuration,
+                new TWEEN.Tween.Promise().then(() => {
+                    if (!this.animationsActive) return;
+                    this.bocaAnimator.setAndStart(
+                        this.boca.rotation,
+                        new THREE.Euler(-Math.PI / 16, 0, 0), // Ligeramente cerrada
+                        this.animationDuration,
+                        new TWEEN.Tween.Promise().then(() => {
+                            if (!this.animationsActive) return;
+                            this.bocaAnimator.setAndStart(
+                                this.boca.rotation,
+                                new THREE.Euler(0, 0, 0), // Volver a la posición inicial
+                                this.animationDuration,
+                                new TWEEN.Tween.Promise().then(() => {
+                                    // No es necesario encadenar boca a walk directamente, se ejecuta en paralelo
+                                })
+                            );
+                        })
+                    );
+                })
+            );
+
+            // Animación de cola (balanceo suave)
+            this.colaAnimator.setAndStart(
+                this.cola.rotation,
+                new THREE.Euler(0, this.tailWhipAmplitude / 2, 0), // Balanceo a un lado
+                this.animationDuration,
+                new TWEEN.Tween.Promise().then(() => {
+                    if (!this.animationsActive) return;
+                    this.colaAnimator.setAndStart(
+                        this.cola.rotation,
+                        new THREE.Euler(0, -this.tailWhipAmplitude / 2, 0), // Balanceo al otro lado
+                        this.animationDuration,
+                        new TWEEN.Tween.Promise().then(() => {
+                            if (!this.animationsActive) return;
+                            this.colaAnimator.setAndStart(
+                                this.cola.rotation,
+                                new THREE.Euler(0, 0, 0), // Volver al centro
+                                this.animationDuration,
+                                new TWEEN.Tween.Promise().then(() => {
+                                    // No es necesario encadenar cola a walk directamente, se ejecuta en paralelo
+                                })
+                            );
+                        })
+                    );
+                })
+            );
+        };
+        walk(); // Iniciar el ciclo de animación
+    }
+
+    /**
+     * Inicia la animación de "lucha" para la Torre.
+     */
+    startFightingAnimation() {
+        if (this.animationsActive) return; // Evitar iniciar si ya está activa
+        this.animationsActive = true;
+
+        const fightDuration = 500; // Duración de cada parte del ataque
+
+        // Animación de la boca (ataque)
+        const mouthAttack = () => {
+            if (!this.animationsActive) return;
+
+            this.bocaAnimator.setAndStart(
+                this.boca.rotation,
+                new THREE.Euler(this.mouthOpenAngle, 0, 0), // Abre
+                fightDuration / 2,
+                new TWEEN.Tween.Promise().then(() => {
+                    if (!this.animationsActive) return;
+                    this.bocaAnimator.setAndStart(
+                        this.boca.rotation,
+                        new THREE.Euler(0, 0, 0), // Cierra
+                        fightDuration / 2,
+                        new TWEEN.Tween.Promise().then(mouthAttack) // Repetir
+                    );
+                })
+            );
+        };
+
+        // Animación de la cola (latigazo)
+        const tailWhip = () => {
+            if (!this.animationsActive) return;
+
+            this.colaAnimator.setAndStart(
+                this.cola.rotation,
+                new THREE.Euler(0, this.tailWhipAmplitude, 0), // Latigazo a un lado
+                fightDuration / 2,
+                new TWEEN.Tween.Promise().then(() => {
+                    if (!this.animationsActive) return;
+                    this.colaAnimator.setAndStart(
+                        this.cola.rotation,
+                        new THREE.Euler(0, -this.tailWhipAmplitude, 0), // Latigazo al otro lado
+                        fightDuration / 2,
+                        new TWEEN.Tween.Promise().then(tailWhip) // Repetir
+                    );
+                })
+            );
+        };
+
+        // Iniciar ambas animaciones
+        mouthAttack();
+        tailWhip();
+    }
+
+    /**
+     * Detiene todas las animaciones iniciadas por `startWalkingAnimation` o `startFightingAnimation` y
+     * restablece las rotaciones a su estado original (0).
+     */
+    stopAllAnimations() {
+        this.animationsActive = false; // Detener el ciclo de repetición
+
+        // Detener los animadores y restablecer rotaciones
+        // Opcional: Podrías hacer un TWEEN para regresar a 0 suavemente en lugar de un reseteo instantáneo
+        this.piernasAnimator.anim.stop();
+        this.bocaAnimator.anim.stop();
+        this.colaAnimator.anim.stop();
+
+        this.updatePiernasRotation(0);
+        this.updateBocaRotation(0);
+        this.updateTailRotation(0);
     }
 }
 

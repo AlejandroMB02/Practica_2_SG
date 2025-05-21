@@ -65,36 +65,29 @@ class Tablero extends THREE.Object3D {
     const torreModel = new Torre()
     torreModel.translateY(0.03);
 
+    this.torre = new THREE.Object3D();
+    this.torre = torreModel;
     // Función para añadir piezas
-    const addPiece = (model3D, strategy, fila, col, team) => {
-      // Aquí se pasa la INSTANCIA de Torre a ChessPiece
-      const piece = new ChessPiece(model3D, strategy) 
-      piece.userData = { fila, columna: col }
-      piece.team = team
-      piece.position.set(
-        cellCenter(col),
-        0.01,
-        cellCenter(fila)
-      )
-      // Si es negro, rotamos 180º para que mire hacia adelante
-      if (team === 'black') {
-        piece.rotation.y = Math.PI
-      }
-      boardGroup.add(piece)
+    // Ahora devuelve la pieza para poder asignarla si es necesario
+    const addPiece = (model, movementStrategy, fila, columna, team) => {
+      const piece = new ChessPiece(model, movementStrategy)
+      this.add(piece)
+      piece.userData = { fila, columna, team, type: model.constructor.name }
+      piece.position.set(columna, 0, fila)
+      this.squares[fila * 8 + columna].userData.pieza = piece
       this.pieces.push(piece)
-      return piece; // Importante: retornar la pieza para poder usarla luego
+      return piece; // CRÍTICO: Devolver la pieza creada
     }
 
-    // Colocación de piezas con instancias
-    this.torreEnTablero = addPiece(torreModel, new RookMovement(), 7 , 7, 'black' )
-
-        // Añadir piezas al tablero
+    // Añadir piezas al tablero
+    addPiece(torreModel.clone(), new RookMovement(), 0, 0, 'white')
     addPiece(caballoModel.clone(), new KnightMovement(), 0, 1, 'white')
     addPiece(alfilModel.clone(), new BishopMovement(), 0, 2, 'white')
     addPiece(reinaModel.clone(), new QueenMovement(), 0, 3, 'white')
     addPiece(reyModel.clone(), new KingMovement(), 0, 4, 'white')
     addPiece(alfilModel.clone(), new BishopMovement(), 0, 5, 'white')
     addPiece(caballoModel.clone(), new KnightMovement(), 0, 6, 'white')
+    addPiece(torreModel.clone(), new RookMovement(), 0, 7, 'white')
 
     // Peones: clonamos modelo si queremos que sean independientes
     for (let col = 0; col < 8; col++) {
@@ -108,7 +101,10 @@ class Tablero extends THREE.Object3D {
     addPiece(reyModel.clone(), new KingMovement(), 7, 3, 'black')
     addPiece(alfilModel.clone(), new BishopMovement(), 7, 2, 'black')
     addPiece(caballoModel.clone(), new KnightMovement(), 7, 1, 'black')
-
+    
+    // LA TORRE ESPECÍFICA QUE QUIERES ANIMAR EN 7,7
+    // Instanciamos una NUEVA Torre y la asignamos a this.torreEnTablero
+    this.torreEnTablero = addPiece(new Torre(), new RookMovement(), 7, 7, 'black');
 
     boardGroup.position.set(-0.5, -0.01, -0.5)
     marco.translate(0, -0.01, 0)

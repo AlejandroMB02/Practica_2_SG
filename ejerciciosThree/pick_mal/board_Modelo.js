@@ -65,10 +65,12 @@ class Tablero extends THREE.Object3D {
     const torreModel = new Torre()
     torreModel.translateY(0.03);
 
+    this.torre = new THREE.Object3D();
+    this.torre = torreModel;
     // Función para añadir piezas
+    // Ahora devuelve la pieza para poder asignarla si es necesario
     const addPiece = (model3D, strategy, fila, col, team) => {
-      // Aquí se pasa la INSTANCIA de Torre a ChessPiece
-      const piece = new ChessPiece(model3D, strategy) 
+      const piece = new ChessPiece(model3D, strategy)
       piece.userData = { fila, columna: col }
       piece.team = team
       piece.position.set(
@@ -82,19 +84,18 @@ class Tablero extends THREE.Object3D {
       }
       boardGroup.add(piece)
       this.pieces.push(piece)
-      return piece; // Importante: retornar la pieza para poder usarla luego
+      return piece; // CRÍTICO: Devuelve la instancia de ChessPiece
     }
 
-    // Colocación de piezas con instancias
-    this.torreEnTablero = addPiece(torreModel, new RookMovement(), 7 , 7, 'black' )
-
-        // Añadir piezas al tablero
+    // Añadir piezas al tablero
+    addPiece(torreModel.clone(), new RookMovement(), 0, 0, 'white')
     addPiece(caballoModel.clone(), new KnightMovement(), 0, 1, 'white')
     addPiece(alfilModel.clone(), new BishopMovement(), 0, 2, 'white')
     addPiece(reinaModel.clone(), new QueenMovement(), 0, 3, 'white')
     addPiece(reyModel.clone(), new KingMovement(), 0, 4, 'white')
     addPiece(alfilModel.clone(), new BishopMovement(), 0, 5, 'white')
     addPiece(caballoModel.clone(), new KnightMovement(), 0, 6, 'white')
+    addPiece(torreModel.clone(), new RookMovement(), 0, 7, 'white')
 
     // Peones: clonamos modelo si queremos que sean independientes
     for (let col = 0; col < 8; col++) {
@@ -108,7 +109,10 @@ class Tablero extends THREE.Object3D {
     addPiece(reyModel.clone(), new KingMovement(), 7, 3, 'black')
     addPiece(alfilModel.clone(), new BishopMovement(), 7, 2, 'black')
     addPiece(caballoModel.clone(), new KnightMovement(), 7, 1, 'black')
-
+    
+    // LA TORRE ESPECÍFICA QUE QUIERES ANIMAR EN 7,7
+    // Instanciamos una NUEVA Torre y la asignamos a this.torreEnTablero
+    this.torreEnTablero = addPiece(new Torre(), new RookMovement(), 7, 7, 'black');
 
     boardGroup.position.set(-0.5, -0.01, -0.5)
     marco.translate(0, -0.01, 0)

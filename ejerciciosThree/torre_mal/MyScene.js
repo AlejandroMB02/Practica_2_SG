@@ -46,14 +46,6 @@ class MyScene extends THREE.Scene {
     this.walkAnimationTime = 0;
     this.walkSpeed = 0.1; // Adjust this value to control walking speed
     this.walkAmplitude = Math.PI/2; // Adjust this value to control leg swing
-
-    this.bocaAnimationTime = 0;
-    this.bocaSpeed = 0.1; // Adjust this value to control walking speed
-    this.bocaAmplitude = Math.PI/15; // Adjust this value to control leg swing
-
-    this.colaAnimationTime = 0;
-    this.colaSpeed = 0.1; // Adjust this value to control walking speed
-    this.colaAmplitude = Math.PI/15;
   }
   
   createCamera () {
@@ -192,21 +184,17 @@ class MyScene extends THREE.Scene {
     this.renderer.render (this, this.getCamera());
     this.cameraControl.update();
 
-    // Update walk
+    // Update walk animation time
     this.walkAnimationTime += this.walkSpeed;
+
+    // Calculate the value for leg rotation using a sine wave
+    // This will create a smooth back-and-forth motion
     const piernasRotationValue = Math.sin(this.walkAnimationTime) * this.walkAmplitude;
+
+    // Apply the rotation to the model's legs
     this.model.updatePiernasRotation(piernasRotationValue);
 
-    // Update Boca
-    this.bocaAnimationTime += this.bocaSpeed;
-    const bocaRotationValue = Math.sin(this.bocaAnimationTime) * this.bocaAmplitude;
-    this.model.updateBocaRotation(bocaRotationValue);
-
-    // Update Cola
-    this.colaAnimationTime += this.colaSpeed;
-    const colaRotationValue = Math.sin(this.colaAnimationTime) * this.colaAmplitude;
-    this.model.updateTailRotation(colaRotationValue);
-
+    // Update the rest of the model (including TWEEN animations for tail and mouth)
     this.model.update();
 
     requestAnimationFrame(() => this.update())

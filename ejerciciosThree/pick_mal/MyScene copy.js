@@ -8,20 +8,6 @@ class MyScene extends THREE.Scene {
     constructor(myCanvas) {
         super();
 
-        // Animation variables for walking
-        this.walkAnimationTime = 0;
-        this.walkSpeed = 0; // Adjust this value to control walking speed
-        this.walkAmplitude = Math.PI/2; // Adjust this value to control leg swing
-        this.piernasRotationValue = 0;
-
-        this.bocaAnimationTime = 0;
-        this.bocaSpeed = 0; // Adjust this value to control walking speed
-        this.bocaAmplitude = Math.PI/15; // Adjust this value to control leg swing
-
-        this.colaAnimationTime = 0;
-        this.colaSpeed = 0.1; // Adjust this value to control walking speed
-        this.colaAmplitude = Math.PI/15;
-
         // Estado de captura y turnos
         this.capturedWhite = [];
         this.capturedBlack = [];
@@ -56,6 +42,25 @@ class MyScene extends THREE.Scene {
         // guarde la ChessPiece en this.model.torreEnTablero
         this.torreChessPiece = this.model.torreEnTablero; 
 
+            document.addEventListener('keydown', (event) => {
+        if (event.key === 'w') { // 'w' para caminar
+            if (this.model.torreEnTablero) {
+                this.model.torreEnTablero.startWalking();
+                console.log("Torre empezando a caminar...");
+            }
+        } else if (event.key === 'f') { // 'f' para luchar
+            if (this.model.torreEnTablero) {
+                this.model.torreEnTablero.startFighting();
+                console.log("Torre empezando a luchar...");
+            }
+        } else if (event.key === 's') { // 's' para detener
+            if (this.model.torreEnTablero) {
+                this.model.torreEnTablero.stopAnimations();
+                console.log("Torre deteniendo animaciones...");
+            }
+        }
+        });
+
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
         this.piezaSeleccionada = null;
@@ -89,6 +94,15 @@ class MyScene extends THREE.Scene {
             // Mantener controles desactivados
             this.updateCameraPosition();
 
+            // EJEMPLO: INICIAR ANIMACIÓN DE LA TORRE AL SALIR DE LA INTRODUCCIÓN
+            // O CUANDO SELECCIONAS LA TORRE POR PRIMERA VEZ, etc.
+            if (this.torreChessPiece) {
+                this.torreChessPiece.startWalking(); // Activa la animación de caminar de la torre
+                // Opcional: poner un temporizador para detenerla
+                setTimeout(() => {
+                    this.torreChessPiece.stopAnimations();
+                }, 5000); // Detiene la animación después de 5 segundos
+            }
             return;
         }
 
@@ -108,11 +122,7 @@ class MyScene extends THREE.Scene {
 
                     // Si la pieza seleccionada es la torre, puedes iniciar su animación
                     if (this.piezaSeleccionada === this.torreChessPiece) {
-                        this.walkSpeed = 0.1;
-                    }
-                    else{
-                        this.walkSpeed = 0;
-                        this.bocaSpeed = 0;
+                        this.torreChessPiece.startWalking();
                     }
 
                     new TWEEN.Tween(pieza.position)
@@ -130,13 +140,23 @@ class MyScene extends THREE.Scene {
             const otra = piezaHits[0].object;
             if (otra.team === this.currentTurnTeam && otra !== this.piezaSeleccionada) {
                 event.stopPropagation(); event.preventDefault();
+                
+                // Si la pieza previamente seleccionada era la torre, la detenemos
+                if (this.piezaSeleccionada === this.torreChessPiece) {
+                    this.torreChessPiece.stopAnimations();
+                }
 
                 new TWEEN.Tween(this.piezaSeleccionada.position)
-                    .to({ y: 0.01 }, 300)
+                    .to({ y: 0.01 }, 200)
                     .easing(TWEEN.Easing.Quadratic.In)
                     .start();
                 this.model.limpiarResaltado();
                 this.piezaSeleccionada = otra;
+
+                // Si la nueva pieza seleccionada es la torre, la iniciamos
+                if (this.piezaSeleccionada === this.torreChessPiece) {
+                    this.torreChessPiece.startWalking();
+                }
 
                 new TWEEN.Tween(otra.position)
                     .to({ y: 0.12 }, 300)
@@ -169,8 +189,6 @@ class MyScene extends THREE.Scene {
                     const capX = baseX + Math.floor(idx / perRow) * rowSpacing;
                     const capZ = -0.3 + (idx % perRow) * spacing;
                     if (target.team === 'white') this.capturedWhite.push(target);
-                    if (this.piezaSeleccionada === this.torreChessPiece) {
-                        this.bocaSpeed = 0.5;}
                     else this.capturedBlack.push(target);
                     new TWEEN.Tween(target.position)
                         .to({ y: 0.12 }, 300)
@@ -191,13 +209,17 @@ class MyScene extends THREE.Scene {
                     target.userData.captured = true;
                     this.model.pieces = this.model.pieces.filter(p => p !== target);
                     this.piezas = this.piezas.filter(p => p !== target);
-                    this.walkSpeed = 0;
-                    this.piernasRotationValue = 0;
-                    this.torreChessPiece.originalModel.update();
                 }
 
                 const destX = casilla.position.x;
                 const destZ = casilla.position.z;
+                
+                // Si la pieza que se está moviendo es la torre
+                if (pieza === this.torreChessPiece) {
+                    this.torreChessPiece.stopAnimations(); // Detenemos la animación antes de moverla
+                    // Puedes iniciar una animación de "salto" o "movimiento" aquí si tu Torre la tuviera
+                    // o reactivar una animación de "quietud" si se detuvo.
+                }
 
                 new TWEEN.Tween(pieza.position)
                     .to({ x: destX, z: destZ }, 300)
@@ -222,10 +244,7 @@ class MyScene extends THREE.Scene {
         if (this.piezaSeleccionada) {
             // Si deseleccionamos la torre
             if (this.piezaSeleccionada === this.torreChessPiece) {
-                this.walkSpeed = 0;
-                this.piernasRotationValue = 0;
-                this.bocaSpeed = 0;
-                this.torreChessPiece.originalModel.update();
+                this.torreChessPiece.stopAnimations();
             }
             new TWEEN.Tween(this.piezaSeleccionada.position)
                 .to({ y: 0.01 }, 200)
@@ -260,7 +279,6 @@ class MyScene extends THREE.Scene {
         const distance = 1.6;
         const y = 1.5;
         const z = this.currentTurnTeam === 'white' ? -distance : distance;
-        this.walkSpeed = 0;
         new TWEEN.Tween(this.camera.position)
             .to({ x: 0, y: y, z: z }, 500)
             .easing(TWEEN.Easing.Quadratic.InOut)
@@ -268,7 +286,6 @@ class MyScene extends THREE.Scene {
                 this.camera.lookAt(center);
                 this.cameraControl.target.copy(center);
             })
-            
             .start();
     }
 
@@ -277,7 +294,7 @@ class MyScene extends THREE.Scene {
         this.guiControls = { 
             lightPower: 20.0, 
             ambientIntensity: 0.5, 
-            warmLightPower: 30.0, // Control para la nueva luz cálida
+            warmLightPower: 100.0, // Control para la nueva luz cálida
             axisOnOff: true 
         };
         const folder = gui.addFolder('Luz y Ejes');
@@ -346,26 +363,19 @@ class MyScene extends THREE.Scene {
         // y TWEEN.update() ya se llama globalmente.
         // Puedes eliminar esta línea o mantenerla si planeas añadir lógica futura.
 
-        // Update walk
-        this.walkAnimationTime += this.walkSpeed;
-        this.piernasRotationValue = Math.sin(this.walkAnimationTime) * this.walkAmplitude;
-        this.torreChessPiece.originalModel.updatePiernasRotation(this.piernasRotationValue);
-
-        // Update Boca
-        this.bocaAnimationTime += this.bocaSpeed;
-        const bocaRotationValue = Math.sin(this.bocaAnimationTime) * this.bocaAmplitude;
-        this.torreChessPiece.originalModel.updateBocaRotation(bocaRotationValue);
-
-        // Update Cola
-        this.colaAnimationTime += this.colaSpeed;
-        const colaRotationValue = Math.sin(this.colaAnimationTime) * this.colaAmplitude;
-        this.torreChessPiece.originalModel.updateTailRotation(colaRotationValue);
-
-        this.torreChessPiece.originalModel.update();
-
         requestAnimationFrame(() => this.update());
     }
 
+    // El método `caminar()` que tenías aquí ya no es necesario en MyScene.js
+    // Sus funcionalidades ahora son parte de la clase Torre y se llaman a través de ChessPiece.
+    // caminar() {
+    //     for (let i = 0; i < 4; i++) {
+    //         this.walkAnimationTime += this.walkSpeed;
+    //         const piernasRotationValue = Math.sin(this.walkAnimationTime) * this.walkAmplitude;
+    //         this.model.updatePiernasRotation(piernasRotationValue);
+    //         requestAnimationFrame(() => this.update())
+    //     }
+    // }
 }
 
 $(function () {

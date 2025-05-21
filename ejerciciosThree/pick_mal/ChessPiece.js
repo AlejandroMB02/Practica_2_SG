@@ -24,7 +24,7 @@ class ChessPiece extends THREE.Object3D {
 
     // Clonamos solo el aspecto visual para el gráfico.
     // La lógica de animación se gestiona a través de this.originalModel.
-    this.graphic = model; 
+    this.graphic = model.clone(true); 
     this.add(this.graphic);
 
     this.userData = { fila: 0, columna: 0 };
@@ -55,9 +55,9 @@ class ChessPiece extends THREE.Object3D {
   /**
    * Intenta iniciar la animación de caminar del modelo original (si es una Torre).
    */
-  updatePiernasRotation() {
-    if (this.originalModel && typeof this.originalModel.updatePiernasRotation === 'function') {
-      this.originalModel.updatePiernasRotation();
+  startWalking() {
+    if (this.originalModel && typeof this.originalModel.startWalkingAnimation === 'function') {
+      this.originalModel.startWalkingAnimation();
     } else {
       // console.warn("La pieza no es una Torre o no tiene el método startWalkingAnimation.");
       // No es un problema si otras piezas no tienen animaciones.
@@ -86,9 +86,16 @@ class ChessPiece extends THREE.Object3D {
     }
   }
 
-  update() {
-          this.originalModel.update();
-  }
+  // Si el modelo original (ej. Torre) tiene un método 'update' que llama a TWEEN.update(),
+  // y quieres que TWEEN.update() se llame por cada modelo animado, puedes hacer esto:
+  // update() {
+  //   if (this.originalModel && typeof this.originalModel.update === 'function') {
+  //     this.originalModel.update();
+  //   }
+  // }
+  // SIN EMBARGO, para TWEEN.update(), es más eficiente y común llamarlo una única vez
+  // en tu bucle principal de animación (como se muestra más abajo), ya que TWEEN gestiona
+  // todas las animaciones globales que has iniciado. Tus RotationAnimators ya usan TWEEN.
 }
 
 export { ChessPiece }
