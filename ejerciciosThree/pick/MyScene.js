@@ -8,37 +8,37 @@ class MyScene extends THREE.Scene {
     constructor(myCanvas) {
         super();
 
-        // Animation variables for walking
+        // Variables de animación para caminar
         this.walkAnimationTime = 0;
-        this.walkSpeed = 0; // Adjust this value to control walking speed
-        this.walkAmplitude = Math.PI/2; // Adjust this value to control leg swing
+        this.walkSpeed = 0;
+        this.walkAmplitude = Math.PI/2;
         this.piernasRotationValue = 0;
 
         this.bocaAnimationTime = 0;
-        this.bocaSpeed = 0; // Adjust this value to control walking speed
-        this.bocaAmplitude = Math.PI/15; // Adjust this value to control leg swing
+        this.bocaSpeed = 0;
+        this.bocaAmplitude = Math.PI/15;
 
         this.colaAnimationTime = 0;
-        this.colaSpeed = 0.1; // Adjust this value to control walking speed
+        this.colaSpeed = 0.1;
         this.colaAmplitude = Math.PI/15;
 
         // Estado de captura y turnos
         this.capturedWhite = [];
         this.capturedBlack = [];
-        this.currentTurnTeam = 'white'; // empieza el turno de las blancas
+        this.currentTurnTeam = 'white';
 
         // Parámetros de la animación de introducción
         this.inIntro = true;
         this.introAngle = 0;
-        this.introRadius = 12;      // distancia inicial panorámica
-        this.introHeight = 2;       // altura de la cámara en la introducción
+        this.introRadius = 12;
+        this.introHeight = 2;
 
         this.renderer = this.createRenderer(myCanvas);
         this.gui = this.createGUI();
         this.createLights();
         this.createCamera();
 
-        // Desactivar control de cámara al inicio y en modo por turnos
+        // Desactivar controles de cámara al inicio
         this.cameraControl.noRotate = true;
         this.cameraControl.noPan = true;
         this.cameraControl.noZoom = true;
@@ -51,17 +51,14 @@ class MyScene extends THREE.Scene {
         this.add(this.model);
         this.piezas = this.model.pieces;
 
-        // ACCESO A LA CHESSPIECE DE LA TORRE
-        // Asegúrate de que Tablero.js en su método addPiece para la torre,
-        // guarde la ChessPiece en this.model.torreEnTablero
-        this.torreChessPiece = this.model.torreEnTablero; 
+        // Referencia a la pieza torre
+        this.torreChessPiece = this.model.torreEnTablero;
 
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
         this.piezaSeleccionada = null;
 
         const canvas = this.renderer.domElement;
-        // Siempre desactivar controles según noRotate/noPan/noZoom
         canvas.addEventListener('pointerdown', this.onPointerDown.bind(this), true);
         canvas.addEventListener('pointermove', ev => {
             if (this.piezaSeleccionada) {
@@ -73,26 +70,15 @@ class MyScene extends THREE.Scene {
                 ev.stopPropagation(); ev.preventDefault();
             }
         }, true);
-        
-        // Las variables de animación de caminar que tenías aquí
-        // this.model.torre.walkAnimationTime = 0;
-        // this.model.torre.walkSpeed = 0.1; 
-        // this.model.torre.walkAmplitude = Math.PI / 2;
-        // Estas variables y el método `caminar()` se gestionarán ahora dentro de la clase `Torre`
-        // y se activarán a través de la `ChessPiece`.
     }
 
     onPointerDown(event) {
-        // Primer clic: salir de la introducción y pasar a modo turnos fijo
         if (this.inIntro) {
             this.inIntro = false;
-            // Mantener controles desactivados
             this.updateCameraPosition();
-
             return;
         }
 
-        // Código existente de selección y movimiento (idéntico)
         const rect = this.renderer.domElement.getBoundingClientRect();
         this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -106,13 +92,14 @@ class MyScene extends THREE.Scene {
                     event.stopPropagation(); event.preventDefault();
                     this.piezaSeleccionada = pieza;
 
-                    // Si la pieza seleccionada es la torre, puedes iniciar su animación
-                    if (this.piezaSeleccionada === this.torreChessPiece) {
+                    // Encender/apagar luz roja según selección de torre
+                    if (pieza === this.torreChessPiece) {
                         this.walkSpeed = 0.1;
-                    }
-                    else{
+                        this.redLight.power = 200;
+                    } else {
                         this.walkSpeed = 0;
                         this.bocaSpeed = 0;
+                        this.redLight.power = 0;
                     }
 
                     new TWEEN.Tween(pieza.position)
@@ -125,6 +112,7 @@ class MyScene extends THREE.Scene {
             return;
         }
 
+        // Selección de otra pieza
         const piezaHits = this.raycaster.intersectObjects(this.piezas, false);
         if (piezaHits.length > 0) {
             const otra = piezaHits[0].object;
@@ -138,6 +126,15 @@ class MyScene extends THREE.Scene {
                 this.model.limpiarResaltado();
                 this.piezaSeleccionada = otra;
 
+                if (otra === this.torreChessPiece) {
+                    this.walkSpeed = 0.1;
+                    this.redLight.power = 200;
+                } else {
+                    this.walkSpeed = 0;
+                    this.bocaSpeed = 0;
+                    this.redLight.power = 0;
+                }
+
                 new TWEEN.Tween(otra.position)
                     .to({ y: 0.12 }, 300)
                     .easing(TWEEN.Easing.Quadratic.Out)
@@ -147,6 +144,7 @@ class MyScene extends THREE.Scene {
             }
         }
 
+        // Movimiento a casilla
         const sqHits = this.raycaster.intersectObjects(this.model.squares);
         if (sqHits.length > 0) {
             const casilla = sqHits[0].object;
@@ -158,26 +156,15 @@ class MyScene extends THREE.Scene {
                 const target = this.model.getPiece(destF, destC);
 
                 if (target && target.team !== this.currentTurnTeam) {
-                    // Si la pieza que se captura es la torre, detener sus animaciones
-                    if (target === this.torreChessPiece) {
-                        this.torreChessPiece.stopAnimations();
+                    if (pieza === this.torreChessPiece) {
+                        this.bocaSpeed = 0.5;
                     }
-
-                    const perRow = 4, spacing = 0.06, rowSpacing = 0.15;
-                    const idx = (target.team === 'white' ? this.capturedWhite : this.capturedBlack).length;
-                    const baseX = target.team === 'white' ? -0.15 : 1.12;
-                    const capX = baseX + Math.floor(idx / perRow) * rowSpacing;
-                    const capZ = -0.3 + (idx % perRow) * spacing;
-                    if (target.team === 'white') this.capturedWhite.push(target);
-                    if (this.piezaSeleccionada === this.torreChessPiece) {
-                        this.bocaSpeed = 0.5;}
-                    else this.capturedBlack.push(target);
                     new TWEEN.Tween(target.position)
                         .to({ y: 0.12 }, 600)
                         .easing(TWEEN.Easing.Quadratic.Out)
                         .onComplete(() => {
                             new TWEEN.Tween(target.position)
-                                .to({ x: capX, y: 0.12, z: capZ }, 600)
+                                .to({ x: (target.team === 'white' ? -0.15 : 1.12), y: 0.12, z: 0 }, 600)
                                 .easing(TWEEN.Easing.Quadratic.InOut)
                                 .onComplete(() => {
                                     new TWEEN.Tween(target.position)
@@ -210,7 +197,7 @@ class MyScene extends THREE.Scene {
                         pieza.userData = { fila: destF, columna: destC };
                         this.model.limpiarResaltado();
                         this.piezaSeleccionada = null;
-                        this.currentTurnTeam = (this.currentTurnTeam === 'white') ? 'black' : 'white';
+                        this.currentTurnTeam = (this.currentTurnTeam === 'white' ? 'black' : 'white');
                         this.updateCameraPosition();
                     })
                     .start();
@@ -218,14 +205,15 @@ class MyScene extends THREE.Scene {
             }
         }
 
+        // Deselección
         this.model.limpiarResaltado();
         if (this.piezaSeleccionada) {
-            // Si deseleccionamos la torre
             if (this.piezaSeleccionada === this.torreChessPiece) {
                 this.walkSpeed = 0;
                 this.piernasRotationValue = 0;
                 this.bocaSpeed = 0;
                 this.torreChessPiece.originalModel.update();
+                this.redLight.power = 0;
             }
             new TWEEN.Tween(this.piezaSeleccionada.position)
                 .to({ y: 0.01 }, 200)
@@ -237,7 +225,6 @@ class MyScene extends THREE.Scene {
 
     createCamera() {
         this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 100);
-        // Posición inicial: panorámica o por turno
         const initDistance = this.inIntro ? this.introRadius : 1.6;
         const initY = this.inIntro ? this.introHeight : 1.5;
         const z = this.currentTurnTeam === 'white' ? -initDistance : initDistance;
@@ -254,7 +241,6 @@ class MyScene extends THREE.Scene {
         this.cameraControl.target = look;
     }
 
-    // Ajusta la cámara según el equipo activo
     updateCameraPosition() {
         const center = new THREE.Vector3(0, 0, 0);
         const distance = 1.6;
@@ -269,27 +255,22 @@ class MyScene extends THREE.Scene {
                 this.camera.lookAt(center);
                 this.cameraControl.target.copy(center);
             })
-            
             .start();
     }
 
     createGUI() {
         const gui = new GUI();
-        this.guiControls = { 
-            lightPower: 20.0, 
-            ambientIntensity: 0.5, 
-            warmLightPower: 30.0, // Control para la nueva luz cálida
-            axisOnOff: true 
+        this.guiControls = {
+            lightPower: 20.0,
+            ambientIntensity: 0.5,
+            warmLightPower: 30.0,
+            axisOnOff: true
         };
         const folder = gui.addFolder('Luz y Ejes');
-        folder.add(this.guiControls, 'lightPower', 0, 1000, 20)
-            .name('Luz puntual').onChange(v => this.setLightPower(v));
-        folder.add(this.guiControls, 'ambientIntensity', 0, 1, 0.05)
-            .name('Luz ambiental').onChange(v => this.setAmbientIntensity(v));
-        folder.add(this.guiControls, 'warmLightPower', 0, 5000, 10) // Nuevo control
-            .name('Luz cálida').onChange(v => this.setWarmLightPower(v));
-        folder.add(this.guiControls, 'axisOnOff')
-            .name('Mostrar ejes').onChange(v => this.setAxisVisible(v));
+        folder.add(this.guiControls, 'lightPower', 0, 1000, 20).name('Luz puntual').onChange(v => this.setLightPower(v));
+        folder.add(this.guiControls, 'ambientIntensity', 0, 1, 0.05).name('Luz ambiental').onChange(v => this.setAmbientIntensity(v));
+        folder.add(this.guiControls, 'warmLightPower', 0, 5000, 10).name('Luz cálida').onChange(v => this.setWarmLightPower(v));
+        folder.add(this.guiControls, 'axisOnOff').name('Mostrar ejes').onChange(v => this.setAxisVisible(v));
         return gui;
     }
 
@@ -302,17 +283,22 @@ class MyScene extends THREE.Scene {
         this.pointLight.position.set(2, 3, 1);
         this.add(this.pointLight);
 
-        // Nueva luz cálida
-        this.warmLight = new THREE.PointLight(0xFFD700, this.guiControls.warmLightPower); // Color naranja-salmón
-        this.warmLight.position.set(-2, 2.5, -1.5); // Posición para una iluminación diferente
-        this.warmLight.distance = 10; // Distancia de alcance de la luz
-        this.warmLight.decay = 2; // Atenuación de la luz con la distancia
+        this.warmLight = new THREE.PointLight(0xFFD700, this.guiControls.warmLightPower);
+        this.warmLight.position.set(-2, 2.5, -1.5);
+        this.warmLight.distance = 10;
+        this.warmLight.decay = 2;
         this.add(this.warmLight);
+
+        // Nueva luz roja inicialmente apagada
+        this.redLight = new THREE.SpotLight(0xff0000);
+        this.redLight.power = 0;
+        this.redLight.position.set(0, 5, 0);
+        this.add(this.redLight);
     }
 
     setLightPower(v) { this.pointLight.power = v; }
     setAmbientIntensity(v) { this.ambientLight.intensity = v; }
-    setWarmLightPower(v) { this.warmLight.power = v; } // Nuevo setter
+    setWarmLightPower(v) { this.warmLight.power = v; }
     setAxisVisible(v) { this.axis.visible = v; }
 
     createRenderer(myCanvas) {
@@ -329,7 +315,6 @@ class MyScene extends THREE.Scene {
         this.setCameraAspect(window.innerWidth / window.innerHeight);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
-
     update() {
         this.renderer.render(this, this.getCamera());
         TWEEN.update(); // CRÍTICO: Aquí se actualizan todas las animaciones TWEEN
